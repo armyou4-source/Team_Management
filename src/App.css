@@ -1,0 +1,10 @@
+/* App.css reset to prevent template style conflicts */
+
+.auth-loading-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 15px;
+}

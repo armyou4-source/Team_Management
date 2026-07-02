@@ -1,0 +1,1260 @@
+.dept-tree-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 16px;
+}
+
+.dept-tree-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dept-tree-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.dept-tree-item.selected {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.dept-tree-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-tree-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.dept-tree-item.selected .dept-tree-count {
+  color: var(--accent);
+}
+
+.dept-summary-bar {
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dept-summary-row {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.dept-summary-title-inline {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+  padding-right: 6px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dept-summary-stat {
+  flex: 1;
+  min-width: 116px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.dept-age-stat-count {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.dept-summary-stat-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.dept-summary-stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.dept-member-breakdown-stat {
+  flex: 1.4;
+  min-width: 168px;
+}
+
+.dept-member-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dept-member-breakdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.dept-member-breakdown-name {
+  min-width: 0;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-member-breakdown-name.root-team {
+  color: var(--text-primary);
+}
+
+.dept-member-breakdown-count {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dept-detail-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.dept-detail-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dept-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dept-detail-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.dept-detail-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dept-detail-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.dept-child-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.dept-child-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dept-member-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dept-member-table th,
+.dept-member-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.dept-member-table th {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dept-member-table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.tenure-menu-item {
+  margin-bottom: 0;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  gap: 6px;
+}
+
+.tenure-menu-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  text-align: center;
+  line-height: 1;
+}
+
+.tenure-menu-item.expanded .tenure-menu-chevron {
+  color: #fff;
+  background: var(--accent);
+}
+
+.tenure-sidebar-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.tenure-employee-list {
+  margin-top: 4px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border-color);
+  margin-left: 10px;
+}
+
+.tenure-menu-item.expanded {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.tenure-menu-item.selected {
+  background: var(--accent-light);
+  border-color: var(--accent);
+}
+
+.tenure-employee-item {
+  align-items: flex-start;
+  border-left: 3px solid transparent;
+}
+
+.tenure-employee-item.category-contract {
+  border-left-color: #2563eb;
+}
+
+.tenure-employee-item.category-dispatch {
+  border-left-color: #7c3aed;
+}
+
+.tenure-employee-item.category-unknown {
+  border-left-color: #9ca3af;
+}
+
+.tenure-employee-left {
+  min-width: 0;
+  flex: 1;
+}
+
+.tenure-employee-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tenure-category-badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.tenure-category-badge.contract {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.tenure-category-badge.dispatch {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}
+
+.tenure-category-badge.unknown {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.tenure-employee-top .dept-tree-name {
+  min-width: 0;
+}
+
+.tenure-employee-meta {
+  margin-top: 4px;
+  padding-left: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.tenure-status-badge {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.tenure-status-badge.compact {
+  font-size: 9px;
+  padding: 3px 7px;
+}
+
+.tenure-status-badge.active {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #6ee7b7;
+}
+
+.tenure-status-badge.department {
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.tenure-status-badge.reminder {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+.tenure-status-badge.expired {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.tenure-status-badge.unknown {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.tenure-summary-alert {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tenure-detail-card .tenure-alert {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  color: #9a3412;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tenure-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.tenure-info-item {
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.tenure-info-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+}
+
+.tenure-info-label-note {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.tenure-info-value {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  word-break: keep-all;
+}
+
+.tenure-info-value.days-reminder {
+  color: #c2410c;
+}
+
+.tenure-info-value.days-expired {
+  color: #b91c1c;
+}
+
+.tenure-info-value.days-active {
+  color: #047857;
+}
+
+.tenure-info-value.days-unknown {
+  color: var(--text-secondary);
+}
+
+.tenure-action-group {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.tenure-action-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tenure-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tenure-action-btn {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.tenure-action-btn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tenure-action-btn.calendar {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tenure-action-btn.email {
+  border-color: #6ee7b7;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.tenure-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tenure-action-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.retirement-menu-item {
+  margin-top: 4px;
+}
+
+.tenure-overview-card {
+  overflow: auto;
+}
+
+.tenure-overview-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.tenure-detail-card-nested {
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.tenure-month-selection {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.tenure-month-selection .green-plan-chart-selection-title {
+  color: #1d4ed8;
+}
+
+.tenure-month-selection .green-plan-chart-selection-clear {
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.tenure-expiry-chart-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tenure-expiry-year-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tenure-expiry-year-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.tenure-expiry-year-label-col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: 52px;
+  min-height: 70px;
+  padding-bottom: 2px;
+}
+
+.tenure-expiry-year-label-col .green-plan-chart-year-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.tenure-expiry-year-label-col .green-plan-chart-year-total {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.tenure-expiry-months {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  align-items: end;
+  height: 70px;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.tenure-expiry-chart .tenure-expiry-bar {
+  min-width: 0;
+  width: 100%;
+  gap: 2px;
+}
+
+.tenure-expiry-chart .tenure-expiry-bar .green-plan-chart-bar-track {
+  width: 100%;
+  height: 36px;
+}
+
+.tenure-expiry-bar:not(.empty) .tenure-expiry-bar-fill {
+  height: 100%;
+}
+
+.tenure-expiry-bar.empty .tenure-expiry-bar-fill {
+  height: 0;
+}
+
+.tenure-expiry-bar .green-plan-chart-bar-quarter {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.tenure-expiry-now-line {
+  top: 3px;
+  height: 36px;
+  transform: translateX(-50%);
+}
+
+.tenure-expiry-now-line::before {
+  display: none;
+}
+
+.tenure-selection-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bfdbfe;
+  background: #fff;
+}
+
+.tenure-selection-entry-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.tenure-month-selection .green-plan-chart-selection-list {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.tenure-selection-inline-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.tenure-selection-inline-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.tenure-selection-inline-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.tenure-selection-inline-value {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.tenure-selection-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tenure-action-btn.compact {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.tenure-month-selection .green-plan-date-group {
+  border-top-color: #bfdbfe;
+}
+
+.tenure-month-selection .green-plan-date-group-label {
+  color: #1d4ed8;
+}
+
+.tenure-expiry-bar .green-plan-chart-bar-count {
+  font-size: 10px;
+}
+
+.tenure-expiry-bar-fill {
+  background: #60a5fa;
+}
+
+.tenure-expiry-bar:not(.empty):hover .tenure-expiry-bar-fill {
+  background: #2563eb;
+}
+
+.tenure-expiry-bar.selected .tenure-expiry-bar-fill {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.tenure-selection-chip {
+  cursor: pointer;
+  text-align: left;
+  border: 1px solid #bfdbfe;
+  background: #fff;
+}
+
+.tenure-selection-chip.selected {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 2px #93c5fd;
+}
+
+.tenure-selection-chip .tenure-category-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.retirement-badge {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #6ee7b7;
+}
+
+.retirement-overview-card {
+  overflow: auto;
+}
+
+.retirement-rule-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.retirement-rule-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.retirement-rule-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.retirement-rule-eq {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.retirement-rule-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.green-plan-chart {
+  margin-bottom: 20px;
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.green-plan-chart-header {
+  margin-bottom: 14px;
+}
+
+.green-plan-chart-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.green-plan-chart-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.green-plan-chart-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.green-plan-chart-scroll {
+  overflow-x: auto;
+}
+
+.green-plan-chart-body {
+  display: flex;
+  gap: 0;
+  min-width: min-content;
+  padding-bottom: 4px;
+}
+
+.green-plan-chart-year-block {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.green-plan-chart-year-divider {
+  flex-shrink: 0;
+  width: 1px;
+  margin: 0 12px;
+  background: var(--border-color);
+  align-self: stretch;
+}
+
+.green-plan-chart-year-group {
+  flex-shrink: 0;
+  min-width: 120px;
+  padding: 0 4px;
+}
+
+.green-plan-chart-year-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.green-plan-chart-year-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.green-plan-chart-year-total {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.green-plan-chart-quarters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  align-items: end;
+  height: 160px;
+  position: relative;
+}
+
+/* 2년 근무 현황: 12개월 한 줄 (quarters 4열 규칙 덮어씀) */
+.green-plan-chart-quarters.tenure-expiry-months {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 3px;
+  height: 70px;
+}
+
+.green-plan-chart-now-line {
+  position: absolute;
+  top: 16px;
+  height: 110px;
+  left: calc((var(--now-quarter) - 0.5) * 25%);
+  width: 3px;
+  transform: translateX(-50%);
+  background: #ef4444;
+  box-shadow: 0 0 0 1px #fecaca, 0 0 8px rgba(220, 38, 38, 0.5);
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.green-plan-chart-now-line::before {
+  content: '현재';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, calc(-100% - 4px));
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  font-size: 10px;
+  font-weight: 800;
+  color: #dc2626;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.green-plan-chart-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.green-plan-chart-bar.empty {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.green-plan-chart-bar:not(.empty):hover .green-plan-chart-bar-fill {
+  background: #059669;
+}
+
+.green-plan-chart-bar.selected .green-plan-chart-bar-fill {
+  background: #047857;
+  box-shadow: 0 0 0 2px #6ee7b7;
+}
+
+.green-plan-chart-bar.empty.selected .green-plan-chart-bar-track {
+  box-shadow: inset 0 0 0 2px #6ee7b7;
+}
+
+.green-plan-chart-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 110px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  overflow: hidden;
+}
+
+.green-plan-chart-bar-fill {
+  width: 100%;
+  background: #10b981;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: height 0.2s, background 0.15s;
+}
+
+.green-plan-chart-bar-quarter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.green-plan-chart-bar-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.green-plan-chart-selection {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+}
+
+.green-plan-chart-selection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.green-plan-chart-selection-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #047857;
+}
+
+.green-plan-chart-selection-clear {
+  padding: 4px 10px;
+  border: 1px solid #6ee7b7;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: #047857;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.green-plan-chart-selection-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.green-plan-chart-selection-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.green-plan-date-group {
+  padding-top: 12px;
+  border-top: 1px solid #a7f3d0;
+}
+
+.green-plan-date-group:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.green-plan-date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.green-plan-date-group-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #047857;
+}
+
+.green-plan-date-group-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.green-plan-chart-selection-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  border: 1px solid #a7f3d0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.green-plan-chart-selection-chip-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.green-plan-category-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  border: 1px solid transparent;
+}
+
+.green-plan-category-badge.category-general {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.green-plan-category-badge.category-pro {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}
+
+.green-plan-category-badge.category-other {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+}
+
+.green-plan-chart-selection-chip-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.retirement-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.retirement-summary-stat {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.retirement-summary-stat.highlight {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
+.retirement-summary-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.retirement-summary-stat-value {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.retirement-summary-stat.highlight .retirement-summary-stat-value {
+  color: #047857;
+}
+
+.retirement-cohort-section {
+  margin-bottom: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.retirement-cohort-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.retirement-cohort-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.retirement-cohort-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.retirement-cohort-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.retirement-cohort-count {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.retirement-table-wrap {
+  overflow-x: auto;
+}
+
+.retirement-member-table th,
+.retirement-member-table td {
+  white-space: nowrap;
+}
+
+.retirement-timeline {
+  font-weight: 700;
+}
+
+.retirement-timeline.days-green {
+  color: #047857;
+}
+
+.retirement-timeline.days-sabbatical {
+  color: #b45309;
+}
+
+.retirement-timeline.days-upcoming {
+  color: #1d4ed8;
+}
+
+@media (max-width: 900px) {
+  .tenure-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .retirement-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

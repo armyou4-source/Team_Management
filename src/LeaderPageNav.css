@@ -1,0 +1,29 @@
+.leader-page-nav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.leader-page-nav-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.leader-page-nav-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.leader-page-nav-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
