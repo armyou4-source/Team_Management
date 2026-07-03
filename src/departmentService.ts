@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 import type { DashboardEmployee } from './teamMemberService';
-import { sortEmployeesByPositionAndEmployeeId } from './teamMemberService';
+import { sortEmployeesByPositionAndAge } from './teamMemberService';
 
 export interface DepartmentRow {
   id: string;
@@ -113,10 +113,12 @@ export const countMembersByDepartment = (
 
 export const getMembersInDepartment = (
   employees: DashboardEmployee[],
-  departmentId: string
+  departmentId: string,
+  referenceDate: Date
 ): DashboardEmployee[] =>
-  sortEmployeesByPositionAndEmployeeId(
-    employees.filter((emp) => emp.department === departmentId)
+  sortEmployeesByPositionAndAge(
+    employees.filter((emp) => emp.department === departmentId),
+    referenceDate
   );
 
 export const findDepartmentParent = (

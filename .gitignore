@@ -25,3 +25,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# HR employee CSV imports (local only)
+News_Eng_*.csv

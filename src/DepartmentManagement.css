@@ -243,6 +243,14 @@
   background: var(--bg-tertiary);
 }
 
+.dept-member-table .dept-member-duty {
+  min-width: 160px;
+  max-width: 320px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  word-break: keep-all;
+}
+
 .tenure-menu-item {
   margin-bottom: 0;
   border: 1px solid var(--border-color);
@@ -664,14 +672,21 @@
   white-space: nowrap;
 }
 
-.tenure-expiry-now-line {
-  top: 3px;
-  height: 36px;
-  transform: translateX(-50%);
+.tenure-expiry-year-row:has(.has-now-line) .tenure-expiry-year-label-col {
+  min-height: 86px;
 }
 
-.tenure-expiry-now-line::before {
-  display: none;
+.tenure-expiry-months.has-now-line {
+  height: 86px;
+  padding-top: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.tenure-expiry-chart .green-plan-chart-now-line.tenure-expiry-now-line {
+  top: 19px;
+  height: 36px;
+  transform: translateX(-50%);
 }
 
 .tenure-selection-entry {
@@ -926,6 +941,13 @@
   height: 70px;
 }
 
+.green-plan-chart-quarters.tenure-expiry-months.has-now-line {
+  height: 86px;
+  padding-top: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 .green-plan-chart-now-line {
   position: absolute;
   top: 16px;
@@ -955,6 +977,10 @@
   color: #dc2626;
   white-space: nowrap;
   line-height: 1.4;
+}
+
+.tenure-expiry-chart .green-plan-chart-now-line.tenure-expiry-now-line::before {
+  top: 0;
 }
 
 .green-plan-chart-bar {

@@ -16,6 +16,8 @@ export interface DashboardEmployee {
   displayId: string;
   name: string;
   position: string;
+  grade: string | null;
+  jobTitle: string | null;
   department: string;
   birthDate: string | null;
   category: string | null;
@@ -77,6 +79,40 @@ export const sortEmployeesByPositionAndEmployeeId = <T extends TeamMemberEmploye
   [...employees].sort((a, b) => {
     const posCompare = compareByPositionRank(a.position, b.position);
     if (posCompare !== 0) return posCompare;
+    return compareByHireYearAndEmployeeId(a.id, b.id);
+  });
+
+export const compareByAge = (
+  birthDateA: string | null | undefined,
+  birthDateB: string | null | undefined,
+  referenceDate: Date
+): number => {
+  const dateA = parseBirthDate(birthDateA);
+  const dateB = parseBirthDate(birthDateB);
+
+  if (!dateA && !dateB) return 0;
+  if (!dateA) return 1;
+  if (!dateB) return -1;
+
+  const ageA = calculateAge(dateA, referenceDate);
+  const ageB = calculateAge(dateB, referenceDate);
+
+  if (ageA !== ageB) return ageB - ageA;
+
+  return dateA.getTime() - dateB.getTime();
+};
+
+export const sortEmployeesByPositionAndAge = <
+  T extends TeamMemberEmployee & { birthDate: string | null },
+>(
+  employees: T[],
+  referenceDate: Date
+): T[] =>
+  [...employees].sort((a, b) => {
+    const posCompare = compareByPositionRank(a.position, b.position);
+    if (posCompare !== 0) return posCompare;
+    const ageCompare = compareByAge(a.birthDate, b.birthDate, referenceDate);
+    if (ageCompare !== 0) return ageCompare;
     return compareByHireYearAndEmployeeId(a.id, b.id);
   });
 
@@ -225,6 +261,8 @@ export const mapTeamMemberToEmployee = (row: TeamMemberRow): DashboardEmployee =
   displayId: formatEmployeeId(id, row.구분),
   name: row.성명 || '',
   position: row.직급 || row.직위 || '사원',
+  grade: row.직급 ?? null,
+  jobTitle: row.직위 ?? null,
   department: row.소속 || '미지정',
   birthDate: row.생년월일 ?? null,
   category: row.구분 ?? null,

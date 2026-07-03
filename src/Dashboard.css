@@ -471,20 +471,24 @@
 }
 
 .form-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
+}
+
+.form-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 
 .form-card-title {
   font-family: 'Outfit', sans-serif;
   font-size: 18px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0;
 }
 
 .form-card-subtitle {
@@ -608,6 +612,18 @@
   border-color: #fde68a;
   background: #fef3c7;
   color: #b45309;
+}
+
+.form-btn.reset {
+  border-color: #cbd5e1;
+  background: #fff;
+  color: #475569;
+}
+
+.form-btn.reset:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #334155;
 }
 
 .form-btn.exclude {

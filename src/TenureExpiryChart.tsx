@@ -40,7 +40,7 @@ export default function TenureExpiryChart({
               <span className="green-plan-chart-year-total">{totalCount}명</span>
             </div>
             <div
-              className="green-plan-chart-quarters tenure-expiry-months"
+              className={`green-plan-chart-quarters tenure-expiry-months${year === currentYear ? ' has-now-line' : ''}`}
             >
               {year === currentYear && (
                 <div

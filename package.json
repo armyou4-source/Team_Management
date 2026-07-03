@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "db:check-interview": "node scripts/setup-team-interview.mjs"
+    "db:check-interview": "node scripts/setup-team-interview.mjs",
+    "update-members": "node src/scripts/update-members.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

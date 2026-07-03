@@ -38,6 +38,14 @@ const DEFAULT_FORM: InterviewForm = {
   complaints: '',
 };
 
+const RESET_FORM: InterviewForm = {
+  date: '',
+  purpose: '',
+  content: '',
+  feedback: '',
+  complaints: '',
+};
+
 const hasFormContent = (form: InterviewForm): boolean =>
   Boolean(form.content.trim() || form.feedback.trim() || form.complaints.trim());
 
@@ -236,6 +244,22 @@ export default function Dashboard({
     }
   };
 
+  const handleResetForm = async () => {
+    if (!selectedEmp) {
+      alert('면담 대상 사원을 선택해주세요.');
+      return;
+    }
+
+    const resetForm: InterviewForm = { ...RESET_FORM };
+    await upsertInterviewRecord(
+      selectedEmp,
+      resetForm,
+      '미입력',
+      '면담 기록이 초기화되었습니다.'
+    );
+    setForm(resetForm);
+  };
+
   const handleDraftSave = async () => {
     if (!selectedEmp) {
       alert('면담 대상 사원을 선택해주세요.');
@@ -267,7 +291,7 @@ export default function Dashboard({
       return;
     }
     if (!hasFormContent(form)) {
-      alert('주요 면담 내용을 입력해 주세요.');
+      alert('피드백내용을 입력해 주세요.');
       return;
     }
     await upsertInterviewRecord(selectedEmp, form, '저장완료', '면담 기록이 저장되었습니다.');
@@ -344,14 +368,16 @@ export default function Dashboard({
       <section className="form-card">
         <div className="form-card-header">
           <div>
-            <h3 className="form-card-title">{selectedEmp.name}</h3>
+            <div className="form-card-title-row">
+              <h3 className="form-card-title">{selectedEmp.name}</h3>
+              <span className={`interview-status ${getStatusClass(currentStatus)}`}>
+                {currentStatus}
+              </span>
+            </div>
             <p className="form-card-subtitle">
               {selectedEmp.position} · {selectedEmp.department} · 사번 {selectedEmp.displayId}
             </p>
           </div>
-          <span className={`interview-status ${getStatusClass(currentStatus)}`}>
-            {currentStatus}
-          </span>
         </div>
 
         <div className="form-grid">
@@ -377,38 +403,56 @@ export default function Dashboard({
             />
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader('주요 면담 내용', 'content', form.content, 'interview-content')}
+            {renderFormFieldHeader('피드백내용', 'content', form.content, 'interview-content')}
             <textarea
               id="interview-content"
               className="form-textarea"
               value={form.content}
               onChange={(e) => updateFormField('content', e.target.value)}
-              placeholder="면담 내용을 입력하세요"
+              placeholder="피드백 내용을 입력하세요"
             />
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader('피드백 및 조치', 'feedback', form.feedback, 'interview-feedback')}
+            {renderFormFieldHeader(
+              '피평가자에 대한 개선요청사항',
+              'feedback',
+              form.feedback,
+              'interview-feedback'
+            )}
             <textarea
               id="interview-feedback"
               className="form-textarea"
               value={form.feedback}
               onChange={(e) => updateFormField('feedback', e.target.value)}
-              placeholder="피드백 및 후속 조치 사항"
+              placeholder="피평가자에 대한 개선요청사항"
             />
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader('제안 및 민원', 'complaints', form.complaints, 'interview-complaints')}
+            {renderFormFieldHeader(
+              '피평가자의 제안 및 민원',
+              'complaints',
+              form.complaints,
+              'interview-complaints'
+            )}
             <textarea
               id="interview-complaints"
               className="form-textarea"
               value={form.complaints}
               onChange={(e) => updateFormField('complaints', e.target.value)}
-              placeholder="제안사항 또는 민원 내용"
+              placeholder="피평가자의 제안 및 민원"
             />
           </div>
         </div>
 
         <div className="form-actions">
+          <button
+            type="button"
+            className="form-btn reset"
+            onClick={() => void handleResetForm()}
+            disabled={saveStatus === 'saving'}
+          >
+            초기화
+          </button>
           <button
             type="button"
             className="form-btn draft"

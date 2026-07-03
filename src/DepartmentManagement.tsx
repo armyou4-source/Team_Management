@@ -42,6 +42,13 @@ import {
   groupGreenPlanMembersByStartDate,
 } from './retirementService';
 import GreenPlanStartChart from './GreenPlanStartChart';
+import ShiftAssignmentManagement from './ShiftAssignmentManagement';
+import {
+  buildMemberDutyLabelsMap,
+  fetchShiftMembers,
+  getMemberDutyLabel,
+  type ShiftMemberRow,
+} from './shiftService';
 import TenureExpiryChart from './TenureExpiryChart';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
 import {
@@ -63,7 +70,9 @@ interface DepartmentManagementProps {
   loginReferenceDate: Date;
 }
 
-type SidebarView = 'department' | 'tenure' | 'retirement';
+type SidebarView = 'department' | 'tenure' | 'retirement' | 'shift';
+
+const DEPT_SUMMARY_DEPARTMENT_IDS = new Set(['보도기술팀', '중계보도솔루션파트']);
 
 interface DeptTreeItemProps {
   node: DepartmentNode;
@@ -119,6 +128,7 @@ export default function DepartmentManagement({
 }: DepartmentManagementProps) {
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [employees, setEmployees] = useState<DashboardEmployee[]>([]);
+  const [shiftMembers, setShiftMembers] = useState<ShiftMemberRow[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [sidebarView, setSidebarView] = useState<SidebarView>('department');
   const [tenureListExpanded, setTenureListExpanded] = useState(false);
@@ -148,7 +158,7 @@ export default function DepartmentManagement({
 
   const filteredTree = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query || tenureListExpanded || retirementViewActive) return departmentTree;
+    if (!query || tenureListExpanded || retirementViewActive || sidebarView === 'shift') return departmentTree;
 
     const matchingIds = new Set(
       flatDepartments
@@ -169,7 +179,7 @@ export default function DepartmentManagement({
         );
 
     return filterNodes(departmentTree);
-  }, [departmentTree, flatDepartments, searchQuery, tenureListExpanded, retirementViewActive]);
+  }, [departmentTree, flatDepartments, searchQuery, tenureListExpanded, retirementViewActive, sidebarView]);
 
   const selectedDept = useMemo(
     () => flatDepartments.find((dept) => dept.id === selectedDeptId) ?? null,
@@ -177,8 +187,11 @@ export default function DepartmentManagement({
   );
 
   const selectedMembers = useMemo(
-    () => (selectedDeptId ? getMembersInDepartment(employees, selectedDeptId) : []),
-    [employees, selectedDeptId]
+    () =>
+      selectedDeptId
+        ? getMembersInDepartment(employees, selectedDeptId, loginReferenceDate)
+        : [],
+    [employees, selectedDeptId, loginReferenceDate]
   );
 
   const tenureStatuses = useMemo(
@@ -273,12 +286,14 @@ export default function DepartmentManagement({
     setDataError(null);
 
     try {
-      const [deptRows, memberRows] = await Promise.all([
+      const [deptRows, memberRows, shiftRows] = await Promise.all([
         fetchDepartments(),
         fetchTeamMembers(),
+        fetchShiftMembers().catch(() => [] as ShiftMemberRow[]),
       ]);
       setDepartments(deptRows);
       setEmployees(memberRows);
+      setShiftMembers(shiftRows);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '데이터를 불러오지 못했습니다.';
       setDataError(message);
@@ -320,6 +335,18 @@ export default function DepartmentManagement({
     () => calculateAverageAgeBreakdown(employees, loginReferenceDate),
     [employees, loginReferenceDate]
   );
+  const memberDutyLabelsMap = useMemo(
+    () => buildMemberDutyLabelsMap(shiftMembers, employees),
+    [shiftMembers, employees]
+  );
+  const showDepartmentSummary =
+    sidebarView === 'department' &&
+    selectedDeptId !== null &&
+    DEPT_SUMMARY_DEPARTMENT_IDS.has(selectedDeptId);
+  const showMemberDutyColumn =
+    sidebarView === 'department' &&
+    selectedDeptId !== null &&
+    DEPT_SUMMARY_DEPARTMENT_IDS.has(selectedDeptId);
   const parentDepartment = selectedDept
     ? findDepartmentParent(departments, selectedDept.id)
     : null;
@@ -355,6 +382,20 @@ export default function DepartmentManagement({
     setTenureListExpanded(false);
     setSidebarView('retirement');
     setSelectedGreenPlanYear(null);
+  };
+
+  const toggleShiftMenu = () => {
+    if (sidebarView === 'shift') {
+      setSidebarView('department');
+      return;
+    }
+
+    setSidebarView('shift');
+    setTenureListExpanded(false);
+    setRetirementViewActive(false);
+    setSelectedGreenPlanYear(null);
+    setSelectedTenureMonthKey(null);
+    setSelectedTenureEmpId(null);
   };
 
   const selectTenureEmployee = (employeeId: string) => {
@@ -783,7 +824,9 @@ export default function DepartmentManagement({
                 ? '이름, 사번, 구분 검색...'
                 : retirementViewActive
                   ? '이름, 사번, 소속, 정년 분기 검색...'
-                  : '부서명 검색...'
+                  : sidebarView === 'shift'
+                    ? '이름, 사번, 직위 검색...'
+                    : '부서명 검색...'
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -871,46 +914,59 @@ export default function DepartmentManagement({
               onClick={toggleRetirementMenu}
               aria-pressed={retirementViewActive}
             >
-              <span className="dept-tree-name">정년퇴직현황</span>
+              <span className="dept-tree-name">정년퇴직 현황</span>
               <span className="dept-tree-count">5년 간 {retirementStatuses.length}명</span>
+            </button>
+          </div>
+
+          <div className="tenure-sidebar-section">
+            <button
+              type="button"
+              className={`dept-tree-item tenure-menu-item shift-menu-item${sidebarView === 'shift' ? ' selected' : ''}`}
+              onClick={toggleShiftMenu}
+              aria-pressed={sidebarView === 'shift'}
+            >
+              <span className="dept-tree-name">근무조 및 직무 편성</span>
             </button>
           </div>
         </div>
       </aside>
 
       <main className="main-content">
-        <section className="dept-summary-bar">
-          <div className="dept-summary-row">
-            <h2 className="dept-summary-title-inline">부서 현황</h2>
-            <div className="dept-summary-stat">
-              <div className="dept-summary-stat-label">총 인원</div>
-              <div className="dept-summary-stat-value">{totalMembers}명</div>
-            </div>
-            <div className="dept-summary-stat dept-member-breakdown-stat">
-              <div className="dept-summary-stat-label">부서 인원</div>
-              <div className="dept-member-breakdown-list">
-                {departmentMemberBreakdown.map((item) => (
-                  <div key={item.id} className="dept-member-breakdown-item">
-                    <span
-                      className={`dept-member-breakdown-name${item.isRootTeam ? ' root-team' : ''}`}
-                      title={item.id}
-                    >
-                      {item.id}
-                    </span>
-                    <span className="dept-member-breakdown-count">{item.count}명</span>
-                  </div>
-                ))}
+        {showDepartmentSummary && (
+          <section className="dept-summary-bar">
+            <div className="dept-summary-row">
+              <h2 className="dept-summary-title-inline">부서 현황</h2>
+              <div className="dept-summary-stat">
+                <div className="dept-summary-stat-label">총 인원</div>
+                <div className="dept-summary-stat-value">{totalMembers}명</div>
               </div>
-            </div>
-            {averageAgeBreakdown.map((item) => (
-              <div key={item.id} className="dept-summary-stat dept-age-stat">
-                <div className="dept-summary-stat-label">{item.label}</div>
-                <div className="dept-summary-stat-value">{item.value}</div>
-                <div className="dept-age-stat-count">{item.count}명</div>
+              <div className="dept-summary-stat dept-member-breakdown-stat">
+                <div className="dept-summary-stat-label">부서 인원</div>
+                <div className="dept-member-breakdown-list">
+                  {departmentMemberBreakdown.map((item) => (
+                    <div key={item.id} className="dept-member-breakdown-item">
+                      <span
+                        className={`dept-member-breakdown-name${item.isRootTeam ? ' root-team' : ''}`}
+                        title={item.id}
+                      >
+                        {item.id}
+                      </span>
+                      <span className="dept-member-breakdown-count">{item.count}명</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
+              {averageAgeBreakdown.map((item) => (
+                <div key={item.id} className="dept-summary-stat dept-age-stat">
+                  <div className="dept-summary-stat-label">{item.label}</div>
+                  <div className="dept-summary-stat-value">{item.value}</div>
+                  <div className="dept-age-stat-count">{item.count}명</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="dept-detail-panel">
           {sidebarView === 'tenure' ? (
@@ -924,6 +980,8 @@ export default function DepartmentManagement({
             </>
           ) : sidebarView === 'retirement' ? (
             renderRetirementOverview()
+          ) : sidebarView === 'shift' ? (
+            <ShiftAssignmentManagement employees={employees} />
           ) : !selectedDept ? (
             <div className="empty-state">
               <div className="empty-state-icon">🏢</div>
@@ -965,6 +1023,7 @@ export default function DepartmentManagement({
                     <tr>
                       <th>이름</th>
                       <th>직급</th>
+                      {showMemberDutyColumn && <th>직무</th>}
                       <th>나이</th>
                       <th>사번</th>
                     </tr>
@@ -974,6 +1033,11 @@ export default function DepartmentManagement({
                       <tr key={member.id}>
                         <td>{member.name}</td>
                         <td>{member.position}</td>
+                        {showMemberDutyColumn && (
+                          <td className="dept-member-duty">
+                            {getMemberDutyLabel(member.id, memberDutyLabelsMap)}
+                          </td>
+                        )}
                         <td>{formatMemberAge(member.birthDate, loginReferenceDate)}</td>
                         <td>{member.displayId}</td>
                       </tr>
