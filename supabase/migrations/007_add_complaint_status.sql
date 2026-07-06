@@ -1,0 +1,15 @@
+-- team_interview / team_interview_history: 건의·제안·민원 처리 상태
+-- Supabase Dashboard → SQL Editor 에서 이 파일을 실행하세요.
+
+ALTER TABLE public.team_interview
+  ADD COLUMN IF NOT EXISTS "건의상태" TEXT
+    CHECK ("건의상태" IS NULL OR "건의상태" IN ('확인', '진행중', '완료', '표시안함'));
+
+ALTER TABLE public.team_interview_history
+  ADD COLUMN IF NOT EXISTS "건의상태" TEXT
+    CHECK ("건의상태" IS NULL OR "건의상태" IN ('확인', '진행중', '완료', '표시안함'));
+
+COMMENT ON COLUMN public.team_interview."건의상태" IS '건의·제안·민원 처리 상태: 확인 | 진행중 | 완료 | 표시안함';
+COMMENT ON COLUMN public.team_interview_history."건의상태" IS '건의·제안·민원 처리 상태: 확인 | 진행중 | 완료 | 표시안함';
+
+NOTIFY pgrst, 'reload schema';

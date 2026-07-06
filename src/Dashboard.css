@@ -247,6 +247,46 @@
   text-overflow: ellipsis;
 }
 
+.employee-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.employee-name-row .employee-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.employee-complaint-badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+  border: 1px solid transparent;
+}
+
+.employee-complaint-badge.status-review {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+.employee-complaint-badge.status-in-progress {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+
+.employee-complaint-badge.status-done {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
 .employee-meta {
   font-size: 11px;
   color: var(--text-tertiary);
@@ -336,7 +376,7 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  padding: 12px 18px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -349,15 +389,15 @@
 
 .summary-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .summary-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   margin: 0;
   color: var(--text-primary);
@@ -399,11 +439,16 @@
 .summary-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .summary-stat {
-  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 0;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
@@ -430,15 +475,17 @@
 }
 
 .summary-stat-label {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-tertiary);
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  white-space: nowrap;
 }
 
 .summary-stat-value {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
+  line-height: 1;
   color: var(--text-primary);
 }
 
@@ -554,10 +601,99 @@
   gap: 8px;
 }
 
-.form-label {
-  font-size: 13px;
-  font-weight: 600;
+.form-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.complaint-status-options {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.complaint-status-btn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-primary);
   color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.complaint-status-btn.status-review {
+  border-color: #bfdbfe;
+  background: #f8fafc;
+  color: #1e40af;
+}
+
+.complaint-status-btn.status-in-progress {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.complaint-status-btn.status-done {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.complaint-status-btn.status-hidden {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  color: #6b7280;
+}
+
+.complaint-status-btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15);
+}
+
+.complaint-status-btn.active {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.complaint-status-btn.status-review.active {
+  border-color: #3b82f6;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.complaint-status-btn.status-in-progress.active {
+  border-color: #f59e0b;
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.complaint-status-btn.status-done.active {
+  border-color: #22c55e;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.complaint-status-btn.status-hidden.active {
+  border-color: #9ca3af;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.complaint-status-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.form-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .form-copy-btn {

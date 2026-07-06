@@ -12,18 +12,24 @@ import {
   type InterviewHistoryEntry,
   type InterviewRecord,
   type InterviewStatus,
+  type ComplaintStatus,
   INTERVIEW_PURPOSE_OPTIONS,
+  COMPLAINT_STATUS_OPTIONS,
   archiveInterviewToHistory,
   createFreshInterviewForm,
   deleteInterviewHistoryEntry,
   fetchInterviewHistoryForEmployee,
   fetchInterviewsFromSupabase,
   getEmployeeDbKey,
+  hasComplaintsContent,
   hasInterviewContent,
   isMissingHistoryTableError,
   isMissingTableError,
+  normalizeComplaintStatus,
   normalizeInterviewPurpose,
+  preserveComplaintFields,
   saveInterviewToSupabase,
+  shouldShowComplaintBadge,
 } from './interviewService';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
 
@@ -47,6 +53,7 @@ const RESET_FORM: InterviewForm = {
   content: '',
   feedback: '',
   complaints: '',
+  complaintStatus: '',
 };
 
 const hasFormContent = (form: InterviewForm): boolean => hasInterviewContent(form);
@@ -82,6 +89,39 @@ const getStatusClass = (status: InterviewStatus): string => {
     default:
       return 'empty';
   }
+};
+
+const getComplaintStatusClass = (status: ComplaintStatus | ''): string => {
+  switch (status) {
+    case '진행중':
+      return 'in-progress';
+    case '완료':
+      return 'done';
+    case '표시안함':
+      return 'hidden';
+    default:
+      return 'review';
+  }
+};
+
+const getActiveComplaintStatus = (status: ComplaintStatus | ''): ComplaintStatus =>
+  normalizeComplaintStatus(status) || '확인';
+
+const getComplaintInfoForEmployee = (
+  emp: Employee,
+  selectedEmpId: string | null,
+  currentForm: InterviewForm,
+  getRecordForEmployee: (emp: Employee) => InterviewRecord | undefined
+): { showBadge: boolean; complaintStatus: ComplaintStatus | '' } => {
+  const form =
+    selectedEmpId === emp.id
+      ? currentForm
+      : getRecordForEmployee(emp)?.form ?? createFreshInterviewForm();
+
+  return {
+    showBadge: shouldShowComplaintBadge(form),
+    complaintStatus: normalizeComplaintStatus(form.complaintStatus),
+  };
 };
 
 export default function Dashboard({
@@ -228,7 +268,8 @@ export default function Dashboard({
         purpose: normalizeInterviewPurpose(record.form.purpose),
       });
     } else {
-      setForm(createFreshInterviewForm());
+      const freshForm = createFreshInterviewForm();
+      setForm(record?.form ? preserveComplaintFields(freshForm, record.form) : freshForm);
     }
     setHistoryExpanded(false);
     void loadInterviewHistory(emp);
@@ -271,6 +312,53 @@ export default function Dashboard({
       </button>
     </div>
   );
+
+  const renderComplaintsFieldHeader = () => {
+    const activeStatus = getActiveComplaintStatus(form.complaintStatus);
+    const canSetStatus = hasComplaintsContent(form);
+
+    return (
+      <div className="form-label-row">
+        <div className="form-label-group">
+          <label className="form-label" htmlFor="interview-complaints">
+            피평가자의 건의, 제안, 민원
+          </label>
+          <div className="complaint-status-options" role="group" aria-label="건의 사항 진행 상태">
+            {COMPLAINT_STATUS_OPTIONS.map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={`complaint-status-btn status-${getComplaintStatusClass(status)}${activeStatus === status ? ' active' : ''}`}
+                onClick={() => void handleComplaintStatusChange(status)}
+                disabled={!canSetStatus || saveStatus === 'saving'}
+                aria-pressed={activeStatus === status}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`form-copy-btn${copiedField === 'complaints' ? ' copied' : ''}`}
+          onClick={() => void copyFieldValue('complaints', form.complaints)}
+          disabled={!form.complaints.trim()}
+        >
+          {copiedField === 'complaints' ? '복사됨' : '복사'}
+        </button>
+      </div>
+    );
+  };
+
+  const handleComplaintStatusChange = async (status: ComplaintStatus) => {
+    if (!selectedEmp || !hasComplaintsContent(form)) {
+      return;
+    }
+
+    const nextForm = { ...form, complaintStatus: status };
+    setForm(nextForm);
+    await upsertInterviewRecord(selectedEmp, nextForm, getStatusForEmployee(selectedEmp));
+  };
 
   const upsertInterviewRecord = async (
     emp: Employee,
@@ -351,12 +439,12 @@ export default function Dashboard({
       return;
     }
     if (!hasFormContent(form)) {
-      alert('피드백내용을 입력해 주세요.');
+      alert('피드백 내용을 입력해 주세요.');
       return;
     }
 
     const savedForm = { ...form };
-    const clearedForm = createFreshInterviewForm();
+    const clearedForm = preserveComplaintFields(createFreshInterviewForm(), savedForm);
     setSaveStatus('saving');
 
     try {
@@ -471,7 +559,7 @@ export default function Dashboard({
     <section className="interview-summary-bar">
       <div className="summary-header">
         <div>
-          <h2 className="summary-title">면담기록 현황</h2>
+          <h2 className="summary-title">면담 기록 현황</h2>
           <div className="summary-badges">
             {!interviewTableReady && (
               <span className="db-badge error">⚠️ team_interview 테이블 필요</span>
@@ -489,15 +577,15 @@ export default function Dashboard({
           <div className="summary-stat-value">{summaryStats.미입력}</div>
         </div>
         <div className="summary-stat stat-draft">
-          <div className="summary-stat-label">작성중</div>
+          <div className="summary-stat-label">작성 중</div>
           <div className="summary-stat-value">{summaryStats.작성중}</div>
         </div>
         <div className="summary-stat stat-saved">
-          <div className="summary-stat-label">저장완료</div>
+          <div className="summary-stat-label">저장 완료</div>
           <div className="summary-stat-value">{summaryStats.저장완료}</div>
         </div>
         <div className="summary-stat stat-excluded">
-          <div className="summary-stat-label">대상외</div>
+          <div className="summary-stat-label">대상 외</div>
           <div className="summary-stat-value">{summaryStats.대상외}</div>
         </div>
       </div>
@@ -609,7 +697,7 @@ export default function Dashboard({
 
         <div className="form-grid">
           <div className="form-field">
-            {renderFormFieldHeader('면담일자', 'date', form.date, 'interview-date')}
+            {renderFormFieldHeader('면담 일자', 'date', form.date, 'interview-date')}
             <input
               id="interview-date"
               type="date"
@@ -619,7 +707,7 @@ export default function Dashboard({
             />
           </div>
           <div className="form-field">
-            {renderFormFieldHeader('면담목적', 'purpose', form.purpose, 'interview-purpose')}
+            {renderFormFieldHeader('면담 목적', 'purpose', form.purpose, 'interview-purpose')}
             <select
               id="interview-purpose"
               className="form-select"
@@ -634,7 +722,7 @@ export default function Dashboard({
             </select>
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader('피드백내용', 'content', form.content, 'interview-content')}
+            {renderFormFieldHeader('피드백 내용', 'content', form.content, 'interview-content')}
             <textarea
               id="interview-content"
               className="form-textarea"
@@ -645,7 +733,7 @@ export default function Dashboard({
           </div>
           <div className="form-field full">
             {renderFormFieldHeader(
-              '피평가자에 대한 개선요청사항',
+              '피평가자에 대한 개선 요청 사항',
               'feedback',
               form.feedback,
               'interview-feedback'
@@ -655,22 +743,26 @@ export default function Dashboard({
               className="form-textarea"
               value={form.feedback}
               onChange={(e) => updateFormField('feedback', e.target.value)}
-              placeholder="피평가자에 대한 개선요청사항"
+              placeholder="피평가자에 대한 개선 요청 사항"
             />
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader(
-              '피평가자의 제안 및 민원',
-              'complaints',
-              form.complaints,
-              'interview-complaints'
-            )}
+            {renderComplaintsFieldHeader()}
             <textarea
               id="interview-complaints"
               className="form-textarea"
               value={form.complaints}
-              onChange={(e) => updateFormField('complaints', e.target.value)}
-              placeholder="피평가자의 제안 및 민원"
+              onChange={(e) => {
+                const complaints = e.target.value;
+                setForm((prev) => ({
+                  ...prev,
+                  complaints,
+                  complaintStatus: complaints.trim()
+                    ? prev.complaintStatus || '확인'
+                    : '',
+                }));
+              }}
+              placeholder="피평가자의 건의, 제안, 민원"
             />
           </div>
         </div>
@@ -798,6 +890,13 @@ export default function Dashboard({
                 <div className="dept-group-title">{department}</div>
                 {members.map((emp) => {
                   const status = getStatusForEmployee(emp as Employee);
+                  const complaintInfo = getComplaintInfoForEmployee(
+                    emp as Employee,
+                    selectedEmpId,
+                    form,
+                    getRecordForEmployee
+                  );
+
                   return (
                     <button
                       key={emp.id}
@@ -806,7 +905,17 @@ export default function Dashboard({
                       onClick={() => selectEmployee(emp as Employee)}
                     >
                       <div className="employee-item-left">
-                        <div className="employee-name">{emp.name}</div>
+                        <div className="employee-name-row">
+                          <div className="employee-name">{emp.name}</div>
+                          {complaintInfo.showBadge ? (
+                            <span
+                              className={`employee-complaint-badge status-${getComplaintStatusClass(complaintInfo.complaintStatus)}`}
+                              title={`건의 사항 ${getActiveComplaintStatus(complaintInfo.complaintStatus)}`}
+                            >
+                              건의
+                            </span>
+                          ) : null}
+                        </div>
                         <div className="employee-meta">
                           {emp.position} · {(emp as Employee).displayId}
                         </div>

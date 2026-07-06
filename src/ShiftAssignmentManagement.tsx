@@ -84,6 +84,22 @@ export default function ShiftAssignmentManagement({
     [employees]
   );
 
+  const assignedMemberIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    Object.values(assignments.standard).forEach((memberId) => {
+      if (memberId.trim()) ids.add(memberId);
+    });
+
+    Object.values(assignments.standing).forEach((memberIds) => {
+      memberIds.forEach((memberId) => {
+        if (memberId.trim()) ids.add(memberId);
+      });
+    });
+
+    return ids;
+  }, [assignments]);
+
   const getEmployee = useCallback(
     (memberId: string) => findEmployeeByMemberId(memberOptions, memberId) as DashboardEmployee | undefined,
     [memberOptions]
@@ -462,12 +478,14 @@ export default function ShiftAssignmentManagement({
               const isStandardSelected = selectedMemberId === employee.id;
               const isStandingSelected = selectedStandingMemberId === employee.id;
               const isStandingTaken = standingMemberIds.includes(employee.id);
+              const isUnassigned = !assignedMemberIds.has(employee.id);
+              const isSelected = isStandardSelected || isStandingSelected;
 
               return (
                 <button
                   key={employee.id}
                   type="button"
-                  className={`shift-member-pick-btn${isStandardSelected || isStandingSelected ? ' selected' : ''}${isStandingTaken && !isStandingSelected ? ' taken' : ''}`}
+                  className={`shift-member-pick-btn${isSelected ? ' selected' : ''}${isStandingTaken && !isStandingSelected ? ' taken' : ''}${isUnassigned ? ' unassigned' : ''}`}
                   onClick={() => {
                     setSelectedMemberId(employee.id);
                     setSelectedStandingMemberId(employee.id);
@@ -475,6 +493,9 @@ export default function ShiftAssignmentManagement({
                   disabled={isBusy}
                 >
                   <MemberNameLabel employee={employee} />
+                  {isUnassigned && !isSelected ? (
+                    <span className="shift-unassigned-badge">미배정</span>
+                  ) : null}
                 </button>
               );
             })}
