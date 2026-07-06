@@ -232,6 +232,35 @@ export const AVERAGE_AGE_GROUPS = [
   },
 ] as const;
 
+export const MEMBER_CATEGORY_LABELS = ['일반직', '전문직', '계약직', '파견직'] as const;
+
+export interface MemberCategoryCountItem {
+  id: (typeof MEMBER_CATEGORY_LABELS)[number];
+  label: string;
+  count: number;
+}
+
+export const countMembersByCategory = (
+  employees: Array<Pick<DashboardEmployee, 'category'>>
+): MemberCategoryCountItem[] => {
+  const counts = new Map<string, number>();
+  MEMBER_CATEGORY_LABELS.forEach((label) => counts.set(label, 0));
+
+  employees.forEach((employee) => {
+    const category = normalizeMemberCategory(employee.category);
+    if (!MEMBER_CATEGORY_LABELS.includes(category as (typeof MEMBER_CATEGORY_LABELS)[number])) {
+      return;
+    }
+    counts.set(category, (counts.get(category) ?? 0) + 1);
+  });
+
+  return MEMBER_CATEGORY_LABELS.map((label) => ({
+    id: label,
+    label,
+    count: counts.get(label) ?? 0,
+  }));
+};
+
 export const filterEmployeesByCategories = (
   employees: Array<Pick<DashboardEmployee, 'birthDate' | 'category'>>,
   categories: readonly string[]

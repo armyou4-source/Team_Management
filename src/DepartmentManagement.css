@@ -30,19 +30,20 @@
 }
 
 .dept-tree-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.02em;
 }
 
 .dept-tree-count {
   flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-tertiary);
 }
 
@@ -70,13 +71,13 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   margin: 0;
-  padding-right: 6px;
+  padding-right: 8px;
   color: var(--text-primary);
   white-space: nowrap;
+  letter-spacing: -0.03em;
 }
 
 .dept-summary-stat {
@@ -90,27 +91,29 @@
 }
 
 .dept-age-stat-count {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 6px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .dept-summary-stat-label {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
   white-space: nowrap;
   letter-spacing: -0.01em;
 }
 
 .dept-summary-stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
   color: var(--text-primary);
   white-space: nowrap;
+  letter-spacing: -0.03em;
 }
 
 .dept-member-breakdown-stat {
@@ -135,22 +138,41 @@
 
 .dept-member-breakdown-name {
   min-width: 0;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.02em;
 }
 
 .dept-member-breakdown-name.root-team {
   color: var(--text-primary);
+  font-weight: 700;
 }
 
 .dept-member-breakdown-count {
   flex-shrink: 0;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.dept-category-name.category-general {
+  color: #1d4ed8;
+}
+
+.dept-category-name.category-pro {
+  color: #6d28d9;
+}
+
+.dept-category-name.category-contract {
+  color: #c2410c;
+}
+
+.dept-category-name.category-dispatch {
+  color: #047857;
 }
 
 .dept-detail-panel {
@@ -179,26 +201,33 @@
 }
 
 .dept-detail-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
 
 .dept-detail-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.55;
   color: var(--text-secondary);
+  letter-spacing: -0.01em;
 }
 
 .dept-detail-badge {
   flex-shrink: 0;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 700;
-  background: var(--accent-light);
-  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%);
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 1px 2px rgb(99 102 241 / 0.08);
 }
 
 .dept-child-list {
@@ -209,34 +238,43 @@
 }
 
 .dept-child-chip {
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border-color);
   background: var(--bg-tertiary);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
+  letter-spacing: -0.01em;
 }
 
 .dept-member-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .dept-member-table th,
 .dept-member-table td {
-  padding: 10px 12px;
+  padding: 12px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .dept-member-table th {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.01em;
+  background: var(--bg-tertiary);
+}
+
+.dept-member-table td {
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 .dept-member-table tbody tr:hover {
@@ -247,8 +285,9 @@
   min-width: 160px;
   max-width: 320px;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.6;
   word-break: keep-all;
+  font-weight: 400;
 }
 
 .tenure-menu-item {
@@ -334,13 +373,14 @@
 
 .tenure-category-badge {
   flex-shrink: 0;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   border: 1px solid transparent;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
 .tenure-category-badge.contract {
@@ -375,12 +415,14 @@
 
 .tenure-status-badge {
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 4px 9px;
   border-radius: 999px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   border: 1px solid transparent;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }
 
 .tenure-status-badge.compact {
@@ -469,7 +511,7 @@
 
 .tenure-info-label-note {
   margin-left: 4px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--accent);
 }
@@ -552,7 +594,7 @@
 
 .tenure-action-note {
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--text-tertiary);
 }
@@ -566,9 +608,101 @@
 }
 
 .tenure-overview-badge {
-  background: #eff6ff;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
   color: #1d4ed8;
   border: 1px solid #93c5fd;
+  box-shadow: 0 1px 2px rgb(29 78 216 / 0.08);
+}
+
+.tenure-roster-section {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md);
+  background: #f8fbff;
+}
+
+.tenure-roster-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d4ed8;
+  letter-spacing: -0.02em;
+}
+
+.tenure-roster-empty {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.tenure-roster-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tenure-roster-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #dbeafe;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.tenure-roster-card:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.tenure-roster-card.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.12);
+}
+
+.tenure-roster-card .tenure-category-badge.compact {
+  padding: 2px 7px;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.tenure-roster-name {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.tenure-roster-meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tenure-detail-card-nested {
@@ -617,22 +751,24 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 4px;
-  width: 52px;
+  gap: 5px;
+  width: 58px;
   min-height: 70px;
   padding-bottom: 2px;
 }
 
 .tenure-expiry-year-label-col .green-plan-chart-year-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .tenure-expiry-year-label-col .green-plan-chart-year-total {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   color: #1d4ed8;
+  letter-spacing: -0.01em;
 }
 
 .tenure-expiry-months {
@@ -655,16 +791,40 @@
 }
 
 .tenure-expiry-chart .tenure-expiry-bar .green-plan-chart-bar-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  height: 36px;
+  height: 44px;
 }
 
 .tenure-expiry-bar:not(.empty) .tenure-expiry-bar-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 100%;
 }
 
 .tenure-expiry-bar.empty .tenure-expiry-bar-fill {
   height: 0;
+}
+
+.tenure-expiry-bar-count-in {
+  position: relative;
+  z-index: 1;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.03em;
+}
+
+.tenure-expiry-bar.empty .tenure-expiry-bar-count-in {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-tertiary);
 }
 
 .tenure-expiry-bar .green-plan-chart-bar-quarter {
@@ -685,7 +845,7 @@
 
 .tenure-expiry-chart .green-plan-chart-now-line.tenure-expiry-now-line {
   top: 19px;
-  height: 36px;
+  height: 44px;
   transform: translateX(-50%);
 }
 
@@ -701,11 +861,17 @@
   background: #fff;
 }
 
+.tenure-selection-entry.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.12);
+}
+
 .tenure-selection-entry-head {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 140px;
+  min-width: 148px;
 }
 
 .tenure-month-selection .green-plan-chart-selection-list {
@@ -761,10 +927,6 @@
   color: #1d4ed8;
 }
 
-.tenure-expiry-bar .green-plan-chart-bar-count {
-  font-size: 10px;
-}
-
 .tenure-expiry-bar-fill {
   background: #60a5fa;
 }
@@ -798,9 +960,15 @@
 }
 
 .retirement-badge {
-  background: #ecfdf5;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
   color: #047857;
   border: 1px solid #6ee7b7;
+  box-shadow: 0 1px 2px rgb(4 120 87 / 0.08);
 }
 
 .retirement-overview-card {
@@ -826,19 +994,19 @@
 }
 
 .retirement-rule-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-primary);
 }
 
 .retirement-rule-eq {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-tertiary);
 }
 
 .retirement-rule-value {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent);
 }
@@ -862,9 +1030,15 @@
   color: var(--text-primary);
 }
 
+.retirement-overview-card .green-plan-chart-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
 .green-plan-chart-desc {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-tertiary);
 }
 
@@ -925,6 +1099,66 @@
   color: var(--accent);
 }
 
+.retirement-overview-card .green-plan-chart-year-value {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.retirement-overview-card .green-plan-chart-year-total {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #1d4ed8;
+}
+
+.retirement-overview-card .green-plan-chart-quarters {
+  height: 78px;
+}
+
+.retirement-overview-card .green-plan-chart-now-line {
+  top: 16px;
+  height: 44px;
+}
+
+.retirement-overview-card .green-plan-start-bar .green-plan-chart-bar-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+}
+
+.retirement-overview-card .green-plan-start-bar:not(.empty) .green-plan-start-bar-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+}
+
+.retirement-overview-card .green-plan-start-bar.empty .green-plan-start-bar-fill {
+  height: 0;
+}
+
+.retirement-overview-card .green-plan-bar-count-in {
+  position: relative;
+  z-index: 1;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.03em;
+}
+
+.retirement-overview-card .green-plan-start-bar.empty .green-plan-bar-count-in {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
 .green-plan-chart-quarters {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -934,7 +1168,7 @@
   position: relative;
 }
 
-/* 2년 근무 현황: 12개월 한 줄 (quarters 4열 규칙 덮어씀) */
+/* 계약직 파견직 근무현황: 12개월 한 줄 (quarters 4열 규칙 덮어씀) */
 .green-plan-chart-quarters.tenure-expiry-months {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 3px;
@@ -1122,29 +1356,34 @@
   display: inline-flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: #fff;
   border: 1px solid #a7f3d0;
-  font-size: 13px;
-  font-weight: 700;
   color: var(--text-primary);
 }
 
-.green-plan-chart-selection-chip-top {
+.green-plan-chart-selection-chip-top,
+.tenure-selection-entry .green-plan-chart-selection-chip-top {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--text-primary);
 }
 
 .green-plan-category-badge {
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1.4;
   border: 1px solid transparent;
+  letter-spacing: -0.02em;
 }
 
 .green-plan-category-badge.category-general {
@@ -1165,10 +1404,20 @@
   border-color: var(--border-color);
 }
 
-.green-plan-chart-selection-chip-meta {
+.green-plan-chart-selection-chip-meta,
+.tenure-selection-entry .green-plan-chart-selection-chip-meta {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  color: var(--text-tertiary);
+}
+
+.tenure-selection-entry .tenure-category-badge {
+  padding: 2px 7px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  letter-spacing: -0.02em;
 }
 
 .retirement-summary-grid {
@@ -1191,7 +1440,7 @@
 }
 
 .retirement-summary-stat-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-secondary);
 }
@@ -1228,14 +1477,14 @@
 
 .retirement-cohort-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .retirement-cohort-desc {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   color: var(--text-tertiary);
 }
@@ -1245,7 +1494,7 @@
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--bg-tertiary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-secondary);
 }
@@ -1283,4 +1532,104 @@
   .retirement-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* 부서 관리 탭 — 사이드바 & 공통 타이포그래피 */
+.dept-management {
+  font-family: var(--font-family);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dept-management .sidebar-subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text-tertiary);
+}
+
+.dept-management .user-panel-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dept-management .user-panel-meta {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.dept-management .user-panel-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 1px 2px rgb(99 102 241 / 0.08);
+}
+
+.dept-management .sidebar-btn {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.dept-management .search-input {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.dept-management .leader-page-nav-btn {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.dept-management .dept-tree-item {
+  padding: 10px 12px;
+}
+
+.dept-management .tenure-menu-item .dept-tree-name,
+.dept-management .retirement-menu-item .dept-tree-name,
+.dept-management .shift-menu-item .dept-tree-name,
+.dept-management .schedule-menu-item .dept-tree-name {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.dept-management .tenure-menu-item .dept-tree-count,
+.dept-management .retirement-menu-item .dept-tree-count {
+  font-weight: 600;
+}
+
+.dept-management .empty-state-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.dept-management .empty-state-text {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: -0.01em;
+}
+
+.dept-management .sidebar-empty {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+.dept-management .green-plan-category-badge {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
 }

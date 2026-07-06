@@ -9,11 +9,20 @@ import {
 } from './teamMemberService';
 import {
   type InterviewForm,
+  type InterviewHistoryEntry,
   type InterviewRecord,
   type InterviewStatus,
+  INTERVIEW_PURPOSE_OPTIONS,
+  archiveInterviewToHistory,
+  createFreshInterviewForm,
+  deleteInterviewHistoryEntry,
+  fetchInterviewHistoryForEmployee,
   fetchInterviewsFromSupabase,
   getEmployeeDbKey,
+  hasInterviewContent,
+  isMissingHistoryTableError,
   isMissingTableError,
+  normalizeInterviewPurpose,
   saveInterviewToSupabase,
 } from './interviewService';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
@@ -30,13 +39,7 @@ interface DashboardProps {
 type Employee = DashboardEmployee;
 type SaveStatus = 'idle' | 'saving' | 'error';
 
-const DEFAULT_FORM: InterviewForm = {
-  date: new Date().toISOString().split('T')[0],
-  purpose: '정기면담',
-  content: '',
-  feedback: '',
-  complaints: '',
-};
+const DEFAULT_FORM: InterviewForm = createFreshInterviewForm();
 
 const RESET_FORM: InterviewForm = {
   date: '',
@@ -46,8 +49,27 @@ const RESET_FORM: InterviewForm = {
   complaints: '',
 };
 
-const hasFormContent = (form: InterviewForm): boolean =>
-  Boolean(form.content.trim() || form.feedback.trim() || form.complaints.trim());
+const hasFormContent = (form: InterviewForm): boolean => hasInterviewContent(form);
+
+const formatHistoryDate = (value: string): string => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getHistoryPreview = (form: InterviewForm): string => {
+  const text = form.content.trim() || form.feedback.trim() || form.complaints.trim();
+  if (!text) return '내용 없음';
+  return text.length > 72 ? `${text.slice(0, 72)}…` : text;
+};
 
 const getStatusClass = (status: InterviewStatus): string => {
   switch (status) {
@@ -80,6 +102,12 @@ export default function Dashboard({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [actionLoading, setActionLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [interviewHistory, setInterviewHistory] = useState<InterviewHistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [historyTableReady, setHistoryTableReady] = useState(true);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [historyDeletingId, setHistoryDeletingId] = useState<string | null>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
 
   const departments = useMemo(
@@ -168,10 +196,42 @@ export default function Dashboard({
     return counts;
   }, [employees, getStatusForEmployee]);
 
+  const loadInterviewHistory = useCallback(async (emp: Employee) => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const entries = await fetchInterviewHistoryForEmployee(emp);
+      setInterviewHistory(entries);
+      setHistoryTableReady(true);
+    } catch (err: unknown) {
+      if (isMissingHistoryTableError(err as { code?: string; message?: string })) {
+        setInterviewHistory([]);
+        setHistoryTableReady(false);
+      } else {
+        const message =
+          err instanceof Error ? err.message : '지난 면담 기록을 불러오지 못했습니다.';
+        setHistoryError(message);
+        setInterviewHistory([]);
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
   const selectEmployee = (emp: Employee) => {
     setSelectedEmpId(emp.id);
     const record = getRecordForEmployee(emp);
-    setForm(record?.form ?? { ...DEFAULT_FORM });
+    if (record?.status === '작성중' && hasFormContent(record.form)) {
+      setForm({
+        ...record.form,
+        purpose: normalizeInterviewPurpose(record.form.purpose),
+      });
+    } else {
+      setForm(createFreshInterviewForm());
+    }
+    setHistoryExpanded(false);
+    void loadInterviewHistory(emp);
   };
 
   useEffect(() => {
@@ -294,12 +354,107 @@ export default function Dashboard({
       alert('피드백내용을 입력해 주세요.');
       return;
     }
-    await upsertInterviewRecord(selectedEmp, form, '저장완료', '면담 기록이 저장되었습니다.');
+
+    const savedForm = { ...form };
+    const clearedForm = createFreshInterviewForm();
+    setSaveStatus('saving');
+
+    try {
+      let archived = false;
+      try {
+        await archiveInterviewToHistory(selectedEmp, savedForm, '저장완료');
+        archived = true;
+        setHistoryTableReady(true);
+      } catch (err: unknown) {
+        if (!isMissingHistoryTableError(err as { code?: string; message?: string })) {
+          throw err;
+        }
+        setHistoryTableReady(false);
+      }
+
+      await saveInterviewToSupabase(
+        selectedEmp,
+        archived ? clearedForm : savedForm,
+        '저장완료'
+      );
+      setInterviewRecords((prev) => ({
+        ...prev,
+        [getEmployeeDbKey(selectedEmp)]: {
+          form: archived ? { ...clearedForm } : { ...savedForm },
+          status: '저장완료',
+        },
+      }));
+      setInterviewTableReady(true);
+      setForm(clearedForm);
+      setHistoryExpanded(false);
+      setSaveStatus('idle');
+      await loadInterviewHistory(selectedEmp);
+      alert('면담 기록이 저장되었습니다.');
+    } catch (err: unknown) {
+      console.error('Error saving interview:', err);
+      setSaveStatus('error');
+      if (isMissingTableError(err as { code?: string; message?: string })) {
+        setInterviewTableReady(false);
+        alert(
+          'team_interview 테이블이 없습니다.\n\nSupabase Dashboard → SQL Editor에서\nsupabase/migrations/001_create_team_interview.sql 을 실행해 주세요.'
+        );
+      } else {
+        const message = err instanceof Error ? err.message : '저장에 실패했습니다.';
+        alert(message);
+      }
+    }
+  };
+
+  const handleDeleteHistoryEntry = async (entry: InterviewHistoryEntry) => {
+    if (!selectedEmp) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `${entry.form.date || '일자 미입력'} · ${entry.form.purpose} 면담 기록을 삭제할까요?\n삭제 후 복구할 수 없습니다.`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setHistoryDeletingId(entry.id);
+    try {
+      await deleteInterviewHistoryEntry(entry.id);
+      setInterviewHistory((prev) => prev.filter((item) => item.id !== entry.id));
+    } catch (err: unknown) {
+      if (isMissingHistoryTableError(err as { code?: string; message?: string })) {
+        setHistoryTableReady(false);
+        alert('이력 테이블이 없어 삭제할 수 없습니다.');
+      } else {
+        const message = err instanceof Error ? err.message : '면담 기록 삭제에 실패했습니다.';
+        alert(message);
+      }
+    } finally {
+      setHistoryDeletingId(null);
+    }
+  };
+
+  const handleLoadHistoryEntry = (entry: InterviewHistoryEntry) => {
+    if (hasFormContent(form)) {
+      const confirmed = window.confirm(
+        '현재 작성 중인 내용이 있습니다. 선택한 지난 면담 내용으로 덮어쓸까요?'
+      );
+      if (!confirmed) return;
+    }
+
+    setForm({
+      ...entry.form,
+      purpose: normalizeInterviewPurpose(entry.form.purpose),
+    });
+    setHistoryExpanded(false);
   };
 
   const handleRefresh = async () => {
     setActionLoading(true);
     await loadData();
+    if (selectedEmp) {
+      await loadInterviewHistory(selectedEmp);
+    }
     setActionLoading(false);
   };
 
@@ -367,8 +522,8 @@ export default function Dashboard({
     return (
       <section className="form-card">
         <div className="form-card-header">
-          <div>
-            <div className="form-card-title-row">
+          <div className="form-card-identity-grid">
+            <div className="form-card-title-group">
               <h3 className="form-card-title">{selectedEmp.name}</h3>
               <span className={`interview-status ${getStatusClass(currentStatus)}`}>
                 {currentStatus}
@@ -377,7 +532,79 @@ export default function Dashboard({
             <p className="form-card-subtitle">
               {selectedEmp.position} · {selectedEmp.department} · 사번 {selectedEmp.displayId}
             </p>
+            <section className="interview-history-panel interview-history-panel-inline">
+              <div className="interview-history-header">
+                <h4 className="interview-history-title">지난 면담 불러오기</h4>
+                <button
+                  type="button"
+                  className="interview-history-toggle"
+                  onClick={() => setHistoryExpanded((prev) => !prev)}
+                  aria-expanded={historyExpanded}
+                >
+                  {historyExpanded ? '접기' : '펼치기'}
+                </button>
+              </div>
+            </section>
           </div>
+
+          {!historyTableReady && (
+            <p className="interview-history-note warning">
+              이력 테이블이 없습니다. Supabase에서{' '}
+              <code>supabase/migrations/006_create_team_interview_history.sql</code>을 실행하면
+              지난 면담을 보관·불러올 수 있습니다.
+            </p>
+          )}
+
+          {historyExpanded && (
+            <div className="interview-history-body">
+              <p className="interview-history-desc">
+                저장된 지난 면담 기록을 선택하면 아래 작성란에 불러옵니다.
+              </p>
+              {historyLoading && (
+                <p className="interview-history-empty">지난 면담 기록을 불러오는 중...</p>
+              )}
+              {!historyLoading && historyError && (
+                <p className="interview-history-empty error">{historyError}</p>
+              )}
+              {!historyLoading && !historyError && interviewHistory.length === 0 && (
+                <p className="interview-history-empty">불러올 지난 면담 기록이 없습니다.</p>
+              )}
+              {!historyLoading && !historyError && interviewHistory.length > 0 && (
+                <ul className="interview-history-list">
+                  {interviewHistory.map((entry) => (
+                    <li key={entry.id} className="interview-history-list-item">
+                      <button
+                        type="button"
+                        className="interview-history-item"
+                        onClick={() => handleLoadHistoryEntry(entry)}
+                        disabled={historyDeletingId === entry.id}
+                      >
+                        <div className="interview-history-item-top">
+                          <span className="interview-history-purpose">{entry.form.purpose}</span>
+                          <span className="interview-history-date">
+                            {entry.form.date || '일자 미입력'}
+                          </span>
+                        </div>
+                        <p className="interview-history-preview">{getHistoryPreview(entry.form)}</p>
+                        <span className="interview-history-meta">
+                          저장 {formatHistoryDate(entry.savedAt)}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="interview-history-delete-btn"
+                        onClick={() => void handleDeleteHistoryEntry(entry)}
+                        disabled={historyDeletingId === entry.id}
+                        aria-label={`${entry.form.purpose} 면담 기록 삭제`}
+                      >
+                        {historyDeletingId === entry.id ? '삭제 중' : '삭제'}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="form-grid">
@@ -393,14 +620,18 @@ export default function Dashboard({
           </div>
           <div className="form-field">
             {renderFormFieldHeader('면담목적', 'purpose', form.purpose, 'interview-purpose')}
-            <input
+            <select
               id="interview-purpose"
-              type="text"
-              className="form-input"
-              value={form.purpose}
+              className="form-select"
+              value={normalizeInterviewPurpose(form.purpose)}
               onChange={(e) => updateFormField('purpose', e.target.value)}
-              placeholder="정기면담"
-            />
+            >
+              {INTERVIEW_PURPOSE_OPTIONS.map((purpose) => (
+                <option key={purpose} value={purpose}>
+                  {purpose}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="form-field full">
             {renderFormFieldHeader('피드백내용', 'content', form.content, 'interview-content')}

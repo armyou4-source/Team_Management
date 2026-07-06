@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DashboardEmployee } from './teamMemberService';
 import {
+  ROTATING_SHIFT_SECTION_LABEL,
+  ROTATING_SHIFT_WORK_TYPE,
   STANDARD_SHIFT_IDS,
   STANDARD_SHIFT_ROLES,
   STANDING_SHIFT_ROLES,
+  STANDING_SHIFT_WORK_TYPES,
+  type StandingShiftRole,
   buildEmptyAssignmentState,
   buildStandardAssignmentKey,
   buildStandingAssignmentKey,
@@ -18,6 +22,14 @@ import './ShiftAssignmentManagement.css';
 
 interface ShiftAssignmentManagementProps {
   employees: DashboardEmployee[];
+}
+
+function ShiftWorkTypeBadge({ workType }: { workType: string }) {
+  return (
+    <span className={`shift-work-type-badge shift-work-type-${workType}`} title={`근무 형태: ${workType}`}>
+      {workType}
+    </span>
+  );
 }
 
 function MemberNameLabel({
@@ -272,7 +284,10 @@ export default function ShiftAssignmentManagement({
           }
         }}
       >
-        <h5 className="shift-standing-role-title">{role}</h5>
+        <h5 className="shift-standing-role-title-row">
+          <span className="shift-standing-role-title">{role}</span>
+          <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role as StandingShiftRole]} />
+        </h5>
         <ul className="shift-member-summary-list standing">
           {memberIds.length === 0 ? (
             <li className="shift-member-summary-item empty">배정된 인원 없음</li>
@@ -309,7 +324,7 @@ export default function ShiftAssignmentManagement({
         <div>
           <h3 className="dept-detail-title">근무조 및 직무 편성</h3>
           <p className="dept-detail-subtitle">
-            1조~6조 기본 편성과 상시 직무 담당자를 관리합니다.
+            교대근무 및 상시근무 편성을 관리합니다. x 버튼으로 배정을 취소하고 직무를 배정할 수 있습니다.
           </p>
         </div>
       </div>
@@ -318,7 +333,10 @@ export default function ShiftAssignmentManagement({
 
       <div className="shift-assignment-layout vertical">
         <div className="shift-standard-section">
-          <h4 className="shift-section-title">기본 근무조</h4>
+          <div className="shift-section-title-row">
+            <h4 className="shift-section-title">{ROTATING_SHIFT_SECTION_LABEL}</h4>
+            <ShiftWorkTypeBadge workType={ROTATING_SHIFT_WORK_TYPE} />
+          </div>
           {loading ? (
             <div className="shift-loading">편성 정보를 불러오는 중...</div>
           ) : (
@@ -328,14 +346,14 @@ export default function ShiftAssignmentManagement({
 
         <div className="shift-standing-section">
           <h4 className="shift-section-title">상시 직무</h4>
-          <p className="shift-section-desc">
-            아래 팀원 선택 영역에서 배정한 인원이 표시됩니다. × 버튼으로 배정을 취소할 수 있습니다.
-          </p>
           <div className="shift-standing-role-row">
             {loading
               ? STANDING_SHIFT_ROLES.map((role) => (
                   <div key={role} className="shift-standing-role-block skeleton">
-                    <h5 className="shift-standing-role-title">{role}</h5>
+                    <h5 className="shift-standing-role-title-row">
+                      <span className="shift-standing-role-title">{role}</span>
+                      <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role]} />
+                    </h5>
                   </div>
                 ))
               : STANDING_SHIFT_ROLES.map((role) => renderStandingRoleBlock(role))}
@@ -344,7 +362,7 @@ export default function ShiftAssignmentManagement({
 
         <div className="shift-member-picker-panel bottom">
           <div className="shift-picker-panel-header">
-            <h4 className="shift-picker-section-title">팀원 선택 · 직무 배정</h4>
+            <h4 className="shift-picker-section-title">직무 배정</h4>
             <button
               type="button"
               className="shift-save-btn"
@@ -366,7 +384,7 @@ export default function ShiftAssignmentManagement({
 
           <div className="shift-picker-blocks">
             <section className="shift-picker-block">
-              <h5 className="shift-picker-title">기본 근무조 배정</h5>
+              <h5 className="shift-picker-title">{ROTATING_SHIFT_SECTION_LABEL} 배정</h5>
               <div className="shift-tab-list compact">
                 {STANDARD_SHIFT_IDS.map((shiftId) => (
                   <button
@@ -420,7 +438,7 @@ export default function ShiftAssignmentManagement({
                   >
                     {STANDING_SHIFT_ROLES.map((role) => (
                       <option key={role} value={role}>
-                        {role}
+                        {role} ({STANDING_SHIFT_WORK_TYPES[role]})
                       </option>
                     ))}
                   </select>

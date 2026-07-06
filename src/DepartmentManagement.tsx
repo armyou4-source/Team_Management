@@ -18,19 +18,12 @@ import {
   buildReminderCalendarUrl,
   buildTenureExpiryMonthBuckets,
   buildTenureStatuses,
-  formatDateKorean,
   formatDateDot,
-  formatReminderLeadTime,
-  formatReminderMonthsBeforeExpiry,
   getCategoryBadgeClass,
   getCategoryBadgeLabel,
   getTenureExpiryMonthKey,
-  getTenureListBadgeClass,
-  getTenureListBadgeLabel,
   getTenureMembersByMonthKey,
   getTenureStatusClass,
-  getTenureStatusLabel,
-  groupTenureMembersByExpiryDate,
   openExternalUrl,
   parseTenureExpiryMonthKey,
 } from './contractTenureService';
@@ -43,6 +36,7 @@ import {
 } from './retirementService';
 import GreenPlanStartChart from './GreenPlanStartChart';
 import ShiftAssignmentManagement from './ShiftAssignmentManagement';
+import { openWorkSchedule } from './workScheduleService';
 import {
   buildMemberDutyLabelsMap,
   fetchShiftMembers,
@@ -54,6 +48,7 @@ import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
 import {
   type DashboardEmployee,
   calculateAverageAgeBreakdown,
+  countMembersByCategory,
   fetchTeamMembers,
   formatEmployeeId,
   formatMemberAge,
@@ -131,7 +126,6 @@ export default function DepartmentManagement({
   const [shiftMembers, setShiftMembers] = useState<ShiftMemberRow[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null);
   const [sidebarView, setSidebarView] = useState<SidebarView>('department');
-  const [tenureListExpanded, setTenureListExpanded] = useState(false);
   const [retirementViewActive, setRetirementViewActive] = useState(false);
   const [selectedGreenPlanYear, setSelectedGreenPlanYear] = useState<number | null>(null);
   const [selectedTenureMonthKey, setSelectedTenureMonthKey] = useState<string | null>(null);
@@ -158,7 +152,7 @@ export default function DepartmentManagement({
 
   const filteredTree = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query || tenureListExpanded || retirementViewActive || sidebarView === 'shift') return departmentTree;
+    if (!query || sidebarView === 'tenure' || retirementViewActive || sidebarView === 'shift') return departmentTree;
 
     const matchingIds = new Set(
       flatDepartments
@@ -179,7 +173,7 @@ export default function DepartmentManagement({
         );
 
     return filterNodes(departmentTree);
-  }, [departmentTree, flatDepartments, searchQuery, tenureListExpanded, retirementViewActive, sidebarView]);
+  }, [departmentTree, flatDepartments, searchQuery, retirementViewActive, sidebarView]);
 
   const selectedDept = useMemo(
     () => flatDepartments.find((dept) => dept.id === selectedDeptId) ?? null,
@@ -199,26 +193,6 @@ export default function DepartmentManagement({
     [employees, loginReferenceDate]
   );
 
-  const filteredTenureStatuses = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return tenureStatuses;
-    return tenureStatuses.filter((item) => {
-      const emp = item.employee;
-      return (
-        emp.name.toLowerCase().includes(query) ||
-        emp.id.toLowerCase().includes(query) ||
-        emp.displayId.toLowerCase().includes(query) ||
-        emp.department.toLowerCase().includes(query) ||
-        (emp.category ?? '').toLowerCase().includes(query)
-      );
-    });
-  }, [tenureStatuses, searchQuery]);
-
-  const selectedTenure = useMemo(
-    () => tenureStatuses.find((item) => item.employee.id === selectedTenureEmpId) ?? null,
-    [tenureStatuses, selectedTenureEmpId]
-  );
-
   const tenureNeedingAction = useMemo(
     () => tenureStatuses.filter((item) => item.status === 'reminder_window' || item.status === 'expired'),
     [tenureStatuses]
@@ -233,11 +207,6 @@ export default function DepartmentManagement({
     if (!selectedTenureMonthKey) return [];
     return getTenureMembersByMonthKey(tenureStatuses, selectedTenureMonthKey);
   }, [tenureStatuses, selectedTenureMonthKey]);
-
-  const selectedTenureMonthMemberGroups = useMemo(
-    () => groupTenureMembersByExpiryDate(selectedTenureMonthMembers),
-    [selectedTenureMonthMembers]
-  );
 
   const selectedTenureMonthLabel = useMemo(() => {
     if (!selectedTenureMonthKey) return null;
@@ -331,6 +300,10 @@ export default function DepartmentManagement({
     () => getDepartmentMemberBreakdown(departmentTree, memberCounts),
     [departmentTree, memberCounts]
   );
+  const categoryMemberBreakdown = useMemo(
+    () => countMembersByCategory(employees),
+    [employees]
+  );
   const averageAgeBreakdown = useMemo(
     () => calculateAverageAgeBreakdown(employees, loginReferenceDate),
     [employees, loginReferenceDate]
@@ -358,13 +331,11 @@ export default function DepartmentManagement({
   };
 
   const toggleTenureMenu = () => {
-    if (tenureListExpanded) {
-      setTenureListExpanded(false);
+    if (sidebarView === 'tenure') {
       setSidebarView('department');
       return;
     }
 
-    setTenureListExpanded(true);
     setRetirementViewActive(false);
     setSidebarView('tenure');
     setSelectedTenureMonthKey(null);
@@ -379,7 +350,6 @@ export default function DepartmentManagement({
     }
 
     setRetirementViewActive(true);
-    setTenureListExpanded(false);
     setSidebarView('retirement');
     setSelectedGreenPlanYear(null);
   };
@@ -391,22 +361,14 @@ export default function DepartmentManagement({
     }
 
     setSidebarView('shift');
-    setTenureListExpanded(false);
     setRetirementViewActive(false);
     setSelectedGreenPlanYear(null);
     setSelectedTenureMonthKey(null);
     setSelectedTenureEmpId(null);
   };
 
-  const selectTenureEmployee = (employeeId: string) => {
-    setTenureListExpanded(true);
-    setRetirementViewActive(false);
-    setSidebarView('tenure');
-    setSelectedTenureEmpId(employeeId);
-    const tenure = tenureStatuses.find((item) => item.employee.id === employeeId);
-    if (tenure?.expiryDate) {
-      setSelectedTenureMonthKey(getTenureExpiryMonthKey(tenure.expiryDate));
-    }
+  const openScheduleMenu = () => {
+    openWorkSchedule();
   };
 
   const leaderContact = {
@@ -436,6 +398,31 @@ export default function DepartmentManagement({
     if (tenure.daysUntilExpiry < 0) return `만기 ${Math.abs(tenure.daysUntilExpiry)}일 경과`;
     if (tenure.daysUntilExpiry === 0) return '오늘 만기';
     return `D-${tenure.daysUntilExpiry}`;
+  };
+
+  const selectTenureMember = (tenure: TenureStatus) => {
+    setSelectedTenureEmpId(tenure.employee.id);
+    if (tenure.expiryDate) {
+      setSelectedTenureMonthKey(getTenureExpiryMonthKey(tenure.expiryDate));
+    } else {
+      setSelectedTenureMonthKey(null);
+    }
+  };
+
+  const selectTenureMonthKey = (key: string | null) => {
+    setSelectedTenureMonthKey(key);
+    if (!key) {
+      setSelectedTenureEmpId(null);
+      return;
+    }
+
+    const members = getTenureMembersByMonthKey(tenureStatuses, key);
+    const hasCurrentSelection = members.some(
+      (member) => member.employee.id === selectedTenureEmpId
+    );
+    if (!hasCurrentSelection) {
+      setSelectedTenureEmpId(members[0]?.employee.id ?? null);
+    }
   };
 
   const renderTenureInlineActions = (tenure: TenureStatus) => (
@@ -468,7 +455,10 @@ export default function DepartmentManagement({
   );
 
   const renderTenureSelectionEntry = (tenure: TenureStatus) => (
-    <div key={tenure.employee.id} className="tenure-selection-entry">
+    <div
+      key={tenure.employee.id}
+      className={`tenure-selection-entry${selectedTenureEmpId === tenure.employee.id ? ' selected' : ''}`}
+    >
       <div className="tenure-selection-entry-head">
         <span className="green-plan-chart-selection-chip-top">
           {tenure.employee.name}
@@ -508,113 +498,30 @@ export default function DepartmentManagement({
     </div>
   );
 
-  const renderTenureEmployeeDetailContent = (tenure: TenureStatus) => {
-    const canRequestReplacement =
-      tenure.status === 'reminder_window' || tenure.status === 'expired';
-
-    return (
-      <>
-        <div className="tenure-selection-detail-header">
-          <div>
-            <h4 className="tenure-selection-detail-name">{tenure.employee.name}</h4>
-            <p className="tenure-selection-detail-subtitle">
-              {tenure.employee.category ?? '구분 미등록'} · {tenure.employee.department}{' '}
-              · 사번 {tenure.employee.displayId}
-            </p>
-          </div>
-          <span className={`tenure-status-badge ${getTenureStatusClass(tenure.status)}`}>
-            {getTenureStatusLabel(tenure.status)}
-          </span>
-        </div>
-
-        {canRequestReplacement && (
-          <div className="tenure-alert">
-            {tenure.status === 'reminder_window'
-              ? `근무 만기 ${formatReminderLeadTime(tenure.employee.category)} 전입니다. 인사부에 대체 채용을 요청해 주세요.`
-              : '근무 만기가 지났습니다. 인사부에 대체 채용 현황을 확인해 주세요.'}
-          </div>
-        )}
-
-        <div className="tenure-info-grid">
-          <div className="tenure-info-item">
-            <span className="tenure-info-label">입사일</span>
-            <span className="tenure-info-value">
-              {tenure.hireDate ? formatDateKorean(tenure.hireDate) : '-'}
-            </span>
-          </div>
-          <div className="tenure-info-item">
-            <span className="tenure-info-label">근무 만기</span>
-            <span className="tenure-info-value">
-              {tenure.expiryDate ? formatDateKorean(tenure.expiryDate) : '-'}
-            </span>
-          </div>
-          <div className="tenure-info-item">
-            <span className="tenure-info-label">
-              인력 충원 요청일
-              <span className="tenure-info-label-note">
-                ({formatReminderMonthsBeforeExpiry(tenure.employee.category)})
-              </span>
-            </span>
-            <span className="tenure-info-value">
-              {tenure.reminderDate ? formatDateKorean(tenure.reminderDate) : '-'}
-            </span>
-          </div>
-          <div className="tenure-info-item">
-            <span className="tenure-info-label">만기까지</span>
-            <span className={`tenure-info-value days-${getTenureStatusClass(tenure.status)}`}>
-              {renderTenureDaysLabel(tenure)}
-            </span>
-          </div>
-        </div>
-
-        <div className="tenure-action-group">
-          <h4 className="tenure-action-title">팀장 알림 · 인사부 요청</h4>
-          <div className="tenure-action-buttons">
-            <button
-              type="button"
-              className="tenure-action-btn calendar"
-              onClick={() => handleReminderCalendar(tenure)}
-              disabled={!tenure.reminderDate}
-            >
-              구글 캘린더 (대체채용 요청)
-            </button>
-            <button
-              type="button"
-              className="tenure-action-btn calendar"
-              onClick={() => handleExpiryCalendar(tenure)}
-              disabled={!tenure.expiryDate}
-            >
-              구글 캘린더 (만기 1개월 전 알림)
-            </button>
-            <button
-              type="button"
-              className="tenure-action-btn email"
-              onClick={() => handleHrEmail(tenure)}
-              disabled={!tenure.expiryDate}
-            >
-              인사부 대체채용 요청 메일
-            </button>
-          </div>
-          <p className="tenure-action-note">
-            캘린더 등록 시 팀장 구글 캘린더에 일정이 추가됩니다. 메일 발송 시 팀장 이메일이 참조(CC)에
-            포함됩니다.
-          </p>
-        </div>
-      </>
-    );
-  };
-
-  const renderTenureEmployeeDetail = (tenure: TenureStatus) => (
-    <section className="dept-detail-card tenure-detail-card tenure-detail-card-nested">
-      {renderTenureEmployeeDetailContent(tenure)}
-    </section>
+  const renderTenureRosterLine = (tenure: TenureStatus) => (
+    <button
+      key={tenure.employee.id}
+      type="button"
+      className={`tenure-roster-card${selectedTenureEmpId === tenure.employee.id ? ' selected' : ''}`}
+      onClick={() => selectTenureMember(tenure)}
+    >
+      <span
+        className={`tenure-category-badge compact ${getCategoryBadgeClass(tenure.employee.category)}`}
+      >
+        {getCategoryBadgeLabel(tenure.employee.category)}
+      </span>
+      <span className="tenure-roster-name">{tenure.employee.name}</span>
+      <span className="tenure-roster-meta">
+        {tenure.employee.department} · {tenure.employee.displayId}
+      </span>
+    </button>
   );
 
   const renderTenureOverview = () => (
     <section className="dept-detail-card tenure-overview-card">
       <div className="dept-detail-header">
         <div>
-          <h3 className="dept-detail-title">2년 근무 현황</h3>
+          <h3 className="dept-detail-title">계약직 파견직 근무현황</h3>
           <div className="retirement-rule-guide">
             <div className="retirement-rule-item">
               <span className="retirement-rule-label">근무 만기</span>
@@ -638,18 +545,21 @@ export default function DepartmentManagement({
         </span>
       </div>
 
+      <section className="tenure-roster-section">
+        <h4 className="tenure-roster-title">계약·파견 구성원 명단</h4>
+        {tenureStatuses.length === 0 ? (
+          <p className="tenure-roster-empty">표시할 계약직·파견직 구성원이 없습니다.</p>
+        ) : (
+          <div className="tenure-roster-list">
+            {tenureStatuses.map((tenure) => renderTenureRosterLine(tenure))}
+          </div>
+        )}
+      </section>
+
       <TenureExpiryChart
         buckets={tenureExpiryMonthBuckets}
         selectedMonthKey={selectedTenureMonthKey}
-        onSelectMonthKey={(key) => {
-          setSelectedTenureMonthKey(key);
-          if (key) {
-            const members = getTenureMembersByMonthKey(tenureStatuses, key);
-            setSelectedTenureEmpId(members[0]?.employee.id ?? null);
-          } else {
-            setSelectedTenureEmpId(null);
-          }
-        }}
+        onSelectMonthKey={selectTenureMonthKey}
         referenceDate={loginReferenceDate}
       />
 
@@ -670,27 +580,15 @@ export default function DepartmentManagement({
               선택 해제
             </button>
           </div>
-          {selectedTenureMonthMemberGroups.length === 0 ? (
+          {selectedTenureMonthMembers.length === 0 ? (
             <div className="sidebar-empty">해당 월 근무 만기 대상자가 없습니다.</div>
           ) : (
-            <div className="green-plan-chart-selection-groups">
-              {selectedTenureMonthMemberGroups.map((group) => (
-                <div key={group.key} className="green-plan-date-group">
-                  <div className="green-plan-date-group-header">
-                    <span className="green-plan-date-group-label">만기 {group.label}</span>
-                    <span className="green-plan-date-group-count">{group.members.length}명</span>
-                  </div>
-                  <div className="green-plan-chart-selection-list">
-                    {group.members.map((tenure) => renderTenureSelectionEntry(tenure))}
-                  </div>
-                </div>
-              ))}
+            <div className="green-plan-chart-selection-list">
+              {selectedTenureMonthMembers.map((tenure) => renderTenureSelectionEntry(tenure))}
             </div>
           )}
         </div>
       )}
-
-      {selectedTenure && !selectedTenureMonthKey && renderTenureEmployeeDetail(selectedTenure)}
     </section>
   );
 
@@ -777,7 +675,7 @@ export default function DepartmentManagement({
   );
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container dept-management">
       <aside className="sidebar">
         <div className="sidebar-header">
           <LeaderPageNav activePage={activePage} onNavigate={onNavigate} />
@@ -820,13 +718,11 @@ export default function DepartmentManagement({
             type="search"
             className="search-input"
             placeholder={
-              tenureListExpanded
-                ? '이름, 사번, 구분 검색...'
-                : retirementViewActive
-                  ? '이름, 사번, 소속, 정년 분기 검색...'
-                  : sidebarView === 'shift'
-                    ? '이름, 사번, 직위 검색...'
-                    : '부서명 검색...'
+              retirementViewActive
+                ? '이름, 사번, 소속, 정년 분기 검색...'
+                : sidebarView === 'shift'
+                  ? '이름, 사번, 직위 검색...'
+                  : '부서명 검색...'
             }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -860,51 +756,13 @@ export default function DepartmentManagement({
           <div className="tenure-sidebar-section">
             <button
               type="button"
-              className={`dept-tree-item tenure-menu-item${tenureListExpanded ? ' expanded' : ''}${sidebarView === 'tenure' ? ' selected' : ''}`}
+              className={`dept-tree-item tenure-menu-item${sidebarView === 'tenure' ? ' selected' : ''}`}
               onClick={toggleTenureMenu}
-              aria-expanded={tenureListExpanded}
+              aria-pressed={sidebarView === 'tenure'}
             >
-              <span className="tenure-menu-chevron" aria-hidden="true">
-                {tenureListExpanded ? '▾' : '▸'}
-              </span>
-              <span className="dept-tree-name">2년 근무 현황</span>
+              <span className="dept-tree-name">계약직 파견직 근무현황</span>
               <span className="dept-tree-count">{tenureStatuses.length}명</span>
             </button>
-
-            {tenureListExpanded && (
-              <div className="tenure-employee-list">
-                {!dataLoading && filteredTenureStatuses.length === 0 && (
-                  <div className="sidebar-empty">계약직·파견직 구성원이 없습니다.</div>
-                )}
-                {!dataLoading &&
-                  filteredTenureStatuses.map((tenure) => (
-                    <button
-                      key={tenure.employee.id}
-                      type="button"
-                      className={`dept-tree-item tenure-employee-item category-${getCategoryBadgeClass(tenure.employee.category)}${selectedTenureEmpId === tenure.employee.id ? ' selected' : ''}`}
-                      onClick={() => selectTenureEmployee(tenure.employee.id)}
-                    >
-                      <div className="tenure-employee-left">
-                        <div className="tenure-employee-top">
-                          <span
-                            className={`tenure-category-badge ${getCategoryBadgeClass(tenure.employee.category)}`}
-                          >
-                            {getCategoryBadgeLabel(tenure.employee.category)}
-                          </span>
-                          <span className="dept-tree-name">{tenure.employee.name}</span>
-                        </div>
-                        <div className="tenure-employee-meta">{renderTenureDaysLabel(tenure)}</div>
-                      </div>
-                      <span
-                        className={`tenure-status-badge compact ${getTenureListBadgeClass(tenure)}`}
-                        title={tenure.status === 'active' ? tenure.employee.department : undefined}
-                      >
-                        {getTenureListBadgeLabel(tenure)}
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            )}
           </div>
 
           <div className="tenure-sidebar-section">
@@ -929,6 +787,16 @@ export default function DepartmentManagement({
               <span className="dept-tree-name">근무조 및 직무 편성</span>
             </button>
           </div>
+
+          <div className="tenure-sidebar-section">
+            <button
+              type="button"
+              className="dept-tree-item tenure-menu-item schedule-menu-item"
+              onClick={openScheduleMenu}
+            >
+              <span className="dept-tree-name">근무표</span>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -941,6 +809,28 @@ export default function DepartmentManagement({
                 <div className="dept-summary-stat-label">총 인원</div>
                 <div className="dept-summary-stat-value">{totalMembers}명</div>
               </div>
+              <div className="dept-summary-stat dept-member-breakdown-stat">
+                <div className="dept-summary-stat-label">구분별 인원</div>
+                <div className="dept-member-breakdown-list">
+                  {categoryMemberBreakdown.map((item) => (
+                    <div key={item.id} className="dept-member-breakdown-item">
+                      <span
+                        className={`dept-member-breakdown-name dept-category-name category-${item.id === '전문직' ? 'pro' : item.id === '일반직' ? 'general' : item.id === '계약직' ? 'contract' : 'dispatch'}`}
+                      >
+                        {item.label}
+                      </span>
+                      <span className="dept-member-breakdown-count">{item.count}명</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {averageAgeBreakdown.map((item) => (
+                <div key={item.id} className="dept-summary-stat dept-age-stat">
+                  <div className="dept-summary-stat-label">{item.label}</div>
+                  <div className="dept-summary-stat-value">{item.value}</div>
+                  <div className="dept-age-stat-count">{item.count}명</div>
+                </div>
+              ))}
               <div className="dept-summary-stat dept-member-breakdown-stat">
                 <div className="dept-summary-stat-label">부서 인원</div>
                 <div className="dept-member-breakdown-list">
@@ -957,13 +847,6 @@ export default function DepartmentManagement({
                   ))}
                 </div>
               </div>
-              {averageAgeBreakdown.map((item) => (
-                <div key={item.id} className="dept-summary-stat dept-age-stat">
-                  <div className="dept-summary-stat-label">{item.label}</div>
-                  <div className="dept-summary-stat-value">{item.value}</div>
-                  <div className="dept-age-stat-count">{item.count}명</div>
-                </div>
-              ))}
             </div>
           </section>
         )}

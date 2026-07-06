@@ -15,7 +15,6 @@ export default function GreenPlanStartChart({
   referenceDate,
 }: GreenPlanStartChartProps) {
   const yearGroups = groupGreenPlanBucketsByYear(buckets);
-  const maxCount = Math.max(...buckets.map((bucket) => bucket.count), 1);
   const currentYear = referenceDate.getFullYear();
   const currentQuarter = getQuarterFromDate(referenceDate);
 
@@ -70,37 +69,30 @@ export default function GreenPlanStartChart({
                       return (
                         <div
                           key={`${year}-Q${quarter}-empty`}
-                          className={`green-plan-chart-bar empty${isSelected ? ' selected' : ''}`}
+                          className={`green-plan-chart-bar empty green-plan-start-bar${isSelected ? ' selected' : ''}`}
                         >
                           <div className="green-plan-chart-bar-track">
                             <div className="green-plan-chart-bar-fill" style={{ height: '0%' }} />
+                            <span className="green-plan-bar-count-in">0</span>
                           </div>
                           <span className="green-plan-chart-bar-quarter">Q{quarter}</span>
-                          <span className="green-plan-chart-bar-count">0</span>
                         </div>
                       );
                     }
-
-                    const heightPercent = (bucket.count / maxCount) * 100;
 
                     return (
                       <button
                         key={bucket.key}
                         type="button"
-                        className={`green-plan-chart-bar${isSelected ? ' selected' : ''}`}
+                        className={`green-plan-chart-bar green-plan-start-bar${isSelected ? ' selected' : ''}`}
                         onClick={() => handleSelect(year)}
                         title={`${bucket.label} · ${bucket.count}명 · ${year}년 총 ${totalCount}명`}
                       >
                         <div className="green-plan-chart-bar-track">
-                          <div
-                            className="green-plan-chart-bar-fill"
-                            style={{
-                              height: `${Math.max(heightPercent, bucket.count > 0 ? 8 : 0)}%`,
-                            }}
-                          />
+                          <div className="green-plan-chart-bar-fill green-plan-start-bar-fill" />
+                          <span className="green-plan-bar-count-in">{bucket.count}</span>
                         </div>
                         <span className="green-plan-chart-bar-quarter">Q{quarter}</span>
-                        <span className="green-plan-chart-bar-count">{bucket.count}</span>
                       </button>
                     );
                   })}

@@ -63,9 +63,9 @@ export default function TenureExpiryChart({
                     >
                       <div className="green-plan-chart-bar-track">
                         <div className="green-plan-chart-bar-fill" style={{ height: '0%' }} />
+                        <span className="tenure-expiry-bar-count-in">0</span>
                       </div>
                       <span className="green-plan-chart-bar-quarter">{month}월</span>
-                      <span className="green-plan-chart-bar-count">0</span>
                     </div>
                   );
                 }
@@ -80,9 +80,9 @@ export default function TenureExpiryChart({
                   >
                     <div className="green-plan-chart-bar-track">
                       <div className="green-plan-chart-bar-fill tenure-expiry-bar-fill" />
+                      <span className="tenure-expiry-bar-count-in">{bucket.count}</span>
                     </div>
                     <span className="green-plan-chart-bar-quarter">{month}월</span>
-                    <span className="green-plan-chart-bar-count">{bucket.count}</span>
                   </button>
                 );
               })}

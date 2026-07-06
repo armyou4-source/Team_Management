@@ -5,13 +5,28 @@ export const STANDING_SHIFT_ID = 7;
 
 export const STANDARD_SHIFT_ROLES = [
   '기술감독',
-  'Video',
   'Audio',
+  'Video',
   '녹화/회선',
   '조명',
 ] as const;
 
 export const STANDING_SHIFT_ROLES = ['AR/XR', '정비', '중계', '마이크', '사무실'] as const;
+
+export const ROTATING_SHIFT_SECTION_LABEL = '교대근무';
+export const ROTATING_SHIFT_WORK_TYPE = '탄력근로';
+
+export const STANDING_SHIFT_WORK_TYPES: Record<StandingShiftRole, string> = {
+  'AR/XR': '시차근로',
+  정비: '선택근로',
+  중계: '선택근로',
+  마이크: '시차근로',
+  사무실: '통상근로',
+};
+
+export type ShiftWorkType =
+  | typeof ROTATING_SHIFT_WORK_TYPE
+  | (typeof STANDING_SHIFT_WORK_TYPES)[StandingShiftRole];
 
 export type StandardShiftRole = (typeof STANDARD_SHIFT_ROLES)[number];
 export type StandingShiftRole = (typeof STANDING_SHIFT_ROLES)[number];
