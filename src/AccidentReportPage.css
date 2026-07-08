@@ -1,3 +1,19 @@
+@font-face {
+  font-family: 'MBC New B';
+  src: url('/fonts/MBC-New-B.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'MBC New L';
+  src: url('/fonts/MBC-New-L.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 .accident-report-page {
   min-height: 100vh;
   background: #d9dce1;
@@ -83,19 +99,113 @@
 }
 
 .accident-report-sheet-wrap {
-  max-width: 210mm;
+  width: 210mm;
+  height: 297mm;
   margin: 0 auto;
+  aspect-ratio: 210 / 297;
 }
 
 .accident-report-sheet {
-  width: 210mm;
-  min-height: 297mm;
+  width: 100%;
+  height: 100%;
   margin: 0 auto;
   padding: 10mm 8mm 12mm;
   background: #fff;
   color: #000;
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
   box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  --accident-row-unit: 34px;
+}
+
+.accident-report-tables {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.accident-report-table-body-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.accident-report-table-body-wrap .accident-report-table {
+  box-sizing: border-box;
+}
+
+.accident-report-table-body-fixed {
+  flex: 0 0 auto;
+  border-bottom: 2px solid #000;
+}
+
+.accident-report-flex-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
+
+.accident-report-table-body-flex {
+  width: 100%;
+  height: auto;
+  table-layout: fixed;
+  box-sizing: border-box;
+  border-top: none;
+}
+
+.accident-report-table-body-flex tbody {
+  height: auto;
+}
+
+.accident-report-flex-row th,
+.accident-report-flex-row td {
+  vertical-align: top;
+  padding: 6px 10px;
+  overflow: visible;
+}
+
+.accident-report-flex-row .accident-report-field-wrap {
+  height: 100%;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.accident-report-table-body-flex .accident-report-textarea.flex-resizable {
+  resize: vertical;
+  width: 100%;
+  min-height: 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  line-height: 1.5;
+  display: block;
+  box-sizing: border-box;
+}
+
+.accident-report-other-label {
+  vertical-align: top;
+}
+
+.accident-report-other-label-main {
+  display: block;
+}
+
+.accident-report-improvement-hint {
+  display: block;
+  margin-top: 4px;
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #9ca3af;
 }
 
 .accident-report-table {
@@ -111,46 +221,106 @@
   vertical-align: middle;
 }
 
+.accident-report-table-header {
+  flex: 0 0 auto;
+}
+
 .accident-report-header-row td {
-  height: 58px;
-  padding: 0;
+  height: 22mm;
+  min-height: 22mm;
+  max-height: 22mm;
+  padding: 2px 0;
   vertical-align: middle;
 }
 
 .accident-report-logo {
-  width: 22%;
+  width: 27%;
   text-align: center;
-  font-size: 42px;
-  font-weight: 900;
-  letter-spacing: -0.05em;
-  font-family: 'Times New Roman', Georgia, serif;
+  vertical-align: middle;
+  padding: 8px 12px;
+}
+
+.accident-report-logo-image {
+  display: block;
+  width: 100%;
+  max-width: 130px;
+  height: auto;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .accident-report-title-cell {
-  width: 46%;
+  width: 48%;
   text-align: center;
+}
+
+.accident-report-title,
+.accident-report-label,
+.accident-report-date-text,
+.accident-report-media-label {
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-weight: normal;
 }
 
 .accident-report-title {
   margin: 0;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-size: 40px;
+  letter-spacing: 0.04em;
   line-height: 1.1;
 }
 
 .accident-report-date-cell {
-  width: 32%;
+  width: 25%;
   text-align: center;
   padding: 0 8px;
+}
+
+.accident-report-date-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.accident-report-date-text {
+  font-size: 20px;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.accident-report-date-text.placeholder {
+  color: #9ca3af;
+}
+
+.accident-report-date-picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.accident-report-date-picker::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .accident-report-label {
   width: 17%;
   padding: 8px 6px;
   text-align: center;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14px;
   line-height: 1.35;
   background: #fff;
 }
@@ -170,25 +340,420 @@
   border: none;
   background: transparent;
   color: #000;
-  font: inherit;
-  font-size: 15px;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 13px;
   line-height: 1.5;
-  resize: none;
   outline: none;
   box-sizing: border-box;
 }
 
-.accident-report-input.inline {
-  text-align: center;
-  font-weight: 600;
+.accident-report-textarea.resizable {
+  resize: vertical;
+  min-height: 28px;
+  overflow: auto;
 }
 
-.accident-report-input.inline.date {
+.accident-report-table-body .accident-report-label {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.accident-report-table-body .accident-report-value {
+  vertical-align: middle;
+}
+
+.accident-report-table-body {
+  height: auto;
+}
+
+.accident-report-sheet:not(.accident-report-reference-sheet) .accident-report-table-body-fixed {
+  height: auto;
+}
+
+.accident-report-sheet:not(.accident-report-reference-sheet) .accident-report-standard-row {
+  height: auto;
+}
+
+.accident-report-standard-row th,
+.accident-report-standard-row td {
+  padding: 3px 10px;
+  height: auto;
+  vertical-align: middle;
+}
+
+.accident-report-standard-row .accident-report-field-wrap {
+  min-height: 0;
+  height: auto;
+  align-items: center;
+}
+
+.accident-report-standard-row .accident-report-media-options {
+  min-height: 28px;
+  padding: 2px 0;
+}
+
+.accident-report-standard-row .accident-report-textarea.compact {
+  resize: none;
+  min-height: 24px;
+  height: 24px;
+  max-height: 24px;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 24px;
+  padding: 0;
+}
+
+.accident-report-datetime-row th,
+.accident-report-datetime-row td {
+  vertical-align: top;
+  padding: 6px 10px;
+}
+
+.accident-datetime-field {
+  width: 100%;
+}
+
+.accident-datetime-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.accident-datetime-date-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  min-width: 150px;
+}
+
+.accident-datetime-date-wrap .accident-report-date-picker {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.accident-datetime-date-text {
+  position: relative;
+  z-index: 0;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
   font-size: 16px;
+  line-height: 1.35;
+  pointer-events: none;
+  text-align: center;
+}
+
+.accident-datetime-date-text.placeholder {
+  color: #9ca3af;
+}
+
+.accident-datetime-time-range {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.accident-datetime-time-segment {
+  width: 34px;
+  padding: 2px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  color: #000;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.accident-datetime-time-segment:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.accident-datetime-separator,
+.accident-datetime-range-divider {
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  color: #000;
+}
+
+.accident-datetime-range-divider {
+  margin: 0 4px;
+}
+
+.accident-datetime-duration {
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
+.accident-datetime-print-value {
+  display: none;
+}
+
+.accident-report-select-custom {
+  width: 50%;
+  max-width: 50%;
+}
+
+.accident-report-select-custom-inner {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  overflow: visible;
+}
+
+.accident-report-select-display-text,
+.accident-report-select-display-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: #000;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.accident-report-select-display-text {
+  display: flex;
+  align-items: center;
+}
+
+.accident-report-select-display-text.placeholder {
+  color: #9ca3af;
+}
+
+.accident-report-select-display-input:focus {
+  outline: none;
+}
+
+.accident-report-select-trigger {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 64px;
+  padding: 4px 10px;
+  border: none;
+  border-left: 1px solid #d1d5db;
+  border-radius: 0 4px 4px 0;
+  background: #f9fafb;
+  color: #374151;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.accident-report-select-trigger:hover,
+.accident-report-select-trigger:focus {
+  outline: none;
+  background: #f3f4f6;
+}
+
+.accident-report-select-trigger-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.accident-report-select-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 0;
+  max-height: 240px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.accident-report-select-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #111827;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.accident-report-select-menu-item:hover,
+.accident-report-select-menu-item:focus {
+  outline: none;
+  background: #f3f4f6;
+}
+
+.accident-report-select-menu-item.selected {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.accident-report-workers-field {
+  position: relative;
+  width: 100%;
+}
+
+.accident-report-workers-menu {
+  position: fixed;
+  z-index: 1000;
+  max-height: 240px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  overflow-y: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.accident-report-workers-menu-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.accident-report-workers-menu-item:hover,
+.accident-report-workers-menu-item:focus {
+  outline: none;
+  background: #f3f4f6;
+}
+
+.accident-report-workers-menu-primary {
+  color: #111827;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.accident-report-workers-menu-secondary {
+  color: #6b7280;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.accident-report-field-print-value {
+  display: none;
+}
+
+.accident-report-summary-row th,
+.accident-report-summary-row td,
+.accident-report-triple-row th,
+.accident-report-triple-row td,
+.accident-report-large-row th,
+.accident-report-large-row td,
+.accident-report-flex-row th,
+.accident-report-flex-row td {
+  vertical-align: top;
+  padding: 6px 10px;
+}
+
+.accident-report-compact-row th,
+.accident-report-compact-row td {
+  padding: 3px 10px;
+  height: auto;
+}
+
+.accident-report-table-body .accident-report-field-wrap {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+}
+
+.accident-report-table-body .accident-report-textarea {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.accident-report-table-body .accident-report-media-label {
+  font-size: 18px;
+}
+
+.accident-report-table-body .accident-report-media-options {
+  min-height: 28px;
+}
+
+.accident-report-input.inline {
+  text-align: center;
+}
+
+.accident-report-reporter-row th,
+.accident-report-reporter-row td {
+  padding: 2px 6px;
+  height: 10mm;
+  min-height: 10mm;
+  max-height: 10mm;
+}
+
+.accident-report-reporter-row .accident-report-label {
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.accident-report-reporter-row .accident-report-input.reporter {
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.accident-report-inline-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+}
+
+.accident-report-inline-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  line-height: 1.35;
+  color: #9ca3af;
+  pointer-events: none;
 }
 
 .accident-report-input::placeholder {
   color: #9ca3af;
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 14px;
 }
 
 .accident-report-media-options {
@@ -203,10 +768,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
-  font-weight: 600;
   cursor: pointer;
   user-select: none;
+}
+
+.accident-report-media-label {
+  font-size: 14px;
 }
 
 .accident-report-media-option input {
@@ -231,59 +798,213 @@
   background: #000;
 }
 
-.accident-report-guided-area {
-  position: relative;
-  min-height: 100%;
+.accident-report-auth-top {
+  max-width: 210mm;
+  margin: 0 auto 12px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
 }
 
-.accident-report-guides {
-  position: absolute;
-  inset: 2px 4px auto 10px;
-  pointer-events: none;
-  color: #000;
-  font-size: 15px;
-  line-height: 1.55;
-  z-index: 0;
+.accident-report-history {
+  max-width: 210mm;
+  margin: 0 auto 16px;
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
 }
 
-.accident-report-guides p {
+.accident-report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgb(15 23 42 / 0.55);
+}
+
+.accident-report-modal {
+  width: min(96vw, 230mm);
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #f3f4f6;
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.2);
+  overflow: hidden;
+}
+
+.accident-report-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #d1d5db;
+  background: #fff;
+}
+
+.accident-report-modal-title {
   margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
 }
 
-.accident-report-guides .spacer {
-  height: 0.85em;
+.accident-report-modal-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #4b5563;
 }
 
-.accident-report-textarea.guided {
-  position: relative;
-  z-index: 1;
-  min-height: 100%;
-  width: 100%;
-  padding: 2px 4px;
-  background: transparent;
-  font-size: 15px;
-  line-height: 1.55;
+.accident-report-modal-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.accident-report-tall-row .accident-report-guided-area,
-.accident-report-tall-row .accident-report-textarea.guided {
-  min-height: 150px;
+.accident-report-modal-body {
+  padding: 16px 18px 18px;
+  overflow: auto;
 }
 
-.accident-report-medium-row .accident-report-guided-area,
-.accident-report-medium-row .accident-report-textarea.guided {
-  min-height: 72px;
+.accident-report-reference-wrap {
+  margin: 0 auto;
 }
 
-.accident-report-short-row .accident-report-guided-area,
-.accident-report-short-row .accident-report-textarea.guided {
-  min-height: 48px;
+.accident-report-reference-sheet {
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
 }
 
-.accident-report-tall-row th,
-.accident-report-medium-row th,
-.accident-report-short-row th {
+.accident-report-reference-body-wrap {
+  resize: none;
+  overflow: hidden;
+}
+
+.accident-report-reference-sheet .accident-report-table-body tbody {
+  height: 100%;
+}
+
+.accident-report-reference-sheet .accident-report-ref-tall-compact-row th,
+.accident-report-reference-sheet .accident-report-ref-tall-compact-row td {
+  padding: 6px 10px;
+  height: auto;
+  min-height: 38px;
   vertical-align: middle;
+}
+
+.accident-report-reference-sheet .accident-report-ref-large-row {
+  height: 22%;
+}
+
+.accident-report-reference-sheet .accident-report-ref-large-row th,
+.accident-report-reference-sheet .accident-report-ref-large-row td {
+  height: 22%;
+  vertical-align: top;
+  padding: 8px 10px;
+}
+
+.accident-report-reference-sheet .accident-report-ref-triple-row {
+  height: 12%;
+}
+
+.accident-report-reference-sheet .accident-report-ref-triple-row th,
+.accident-report-reference-sheet .accident-report-ref-triple-row td {
+  height: 12%;
+  vertical-align: top;
+  padding: 8px 10px;
+}
+
+.accident-report-readonly-value {
+  width: 100%;
+  font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.accident-report-readonly-value.placeholder {
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.accident-report-reference-sheet .accident-report-value.center .accident-report-readonly-value {
+  font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  font-size: 20px;
+  text-align: center;
+}
+
+.accident-report-reference-sheet .accident-report-ref-tall-compact-row .accident-report-readonly-value {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+}
+
+.accident-report-reference-sheet .accident-report-ref-large-row .accident-report-readonly-value {
+  min-height: 100%;
+}
+
+.accident-report-reference-sheet .accident-report-ref-triple-row .accident-report-readonly-value {
+  min-height: calc(1.5em * 3);
+}
+
+.accident-report-history-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.accident-report-history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accident-report-history-item {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #111827;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.accident-report-history-item:hover {
+  background: #f3f4f6;
+}
+
+.accident-report-history-empty,
+.accident-report-history-error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.accident-report-history-empty {
+  color: #6b7280;
+}
+
+.accident-report-history-error {
+  color: #b91c1c;
+  font-weight: 600;
 }
 
 .accident-report-auth {
@@ -296,48 +1017,49 @@
 }
 
 .accident-report-auth-label {
-  display: block;
-  margin-bottom: 8px;
+  display: inline-block;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
   color: #111827;
+  white-space: nowrap;
 }
 
 .accident-report-auth-input {
-  width: 120px;
-  padding: 10px 12px;
+  width: 100px;
+  padding: 6px 10px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-align: center;
 }
 
 .accident-report-auth-hint {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #6b7280;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c2410c;
+  line-height: 1.4;
+}
+
+.accident-report-auth-hint strong {
+  font-weight: 800;
 }
 
 @media (max-width: 900px) {
-  .accident-report-sheet {
-    width: 100%;
-    min-height: auto;
-    padding: 12px 8px 24px;
+  .accident-report-sheet-wrap {
+    width: min(calc(100vw - 32px), 210mm);
+    height: calc(min(calc(100vw - 32px), 210mm) * 297 / 210);
   }
 
-  .accident-report-title {
-    font-size: 24px;
-    letter-spacing: 0.06em;
-  }
-
-  .accident-report-logo {
-    font-size: 28px;
-  }
-
-  .accident-report-label {
-    font-size: 13px;
+  .accident-report-logo-image {
+    max-width: 130px;
   }
 
   .accident-report-media-options {
@@ -348,13 +1070,13 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 10mm 8mm 12mm;
+    margin: 0;
   }
 
   html,
   body {
     width: 210mm;
-    height: auto;
+    height: 297mm;
     margin: 0 !important;
     padding: 0 !important;
     background: #fff !important;
@@ -373,48 +1095,127 @@
   }
 
   .accident-report-sheet-wrap {
+    width: 210mm;
+    height: 297mm;
     max-width: none;
     margin: 0;
   }
 
   .accident-report-sheet {
-    width: auto;
-    min-height: auto;
+    width: 210mm;
+    height: 297mm;
     margin: 0;
-    padding: 0;
+    padding: 10mm 8mm 12mm;
     box-shadow: none;
     page-break-after: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
   }
 
   .accident-report-table {
     border-width: 2px;
   }
 
+  .accident-report-table-body-fixed {
+    border-bottom-width: 2px;
+  }
+
+  .accident-report-table-body-flex {
+    border-top: none;
+  }
+
+  .accident-report-title,
+  .accident-report-label,
+  .accident-report-date-text,
+  .accident-report-media-label {
+    font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+  }
+
   .accident-report-input,
   .accident-report-textarea {
+    font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+    font-size: 13px;
     overflow: visible;
   }
 
-  .accident-report-input::placeholder {
-    color: transparent;
+  .accident-report-table-body .accident-report-textarea {
+    font-size: 16px;
+  }
+
+  .accident-report-textarea.resizable {
+    resize: none;
+  }
+
+  .accident-report-date-picker {
+    display: none;
+  }
+
+  .accident-report-date-text {
+    font-size: 20px;
+  }
+
+  .accident-report-table-body .accident-report-label,
+  .accident-report-table-body .accident-report-media-label {
+    font-size: 18px;
+  }
+
+  .accident-report-table-body .accident-report-textarea {
+    font-size: 16px;
+  }
+
+  .accident-report-reporter-row .accident-report-label,
+  .accident-report-reporter-row .accident-report-input.reporter {
+    font-family: 'MBC New B', 'Malgun Gothic', sans-serif;
+    font-size: 20px;
+  }
+
+  .accident-report-inline-placeholder,
+  .accident-report-date-text.placeholder {
+    color: #9ca3af;
   }
 
   .accident-report-media-option input {
     display: none;
   }
 
-  .accident-report-tall-row .accident-report-guided-area,
-  .accident-report-tall-row .accident-report-textarea.guided {
-    min-height: 130px;
+  .accident-report-table-body-wrap {
+    overflow: hidden;
   }
 
-  .accident-report-medium-row .accident-report-guided-area,
-  .accident-report-medium-row .accident-report-textarea.guided {
-    min-height: 60px;
+  .accident-report-table-body-flex .accident-report-textarea.flex-resizable {
+    resize: none;
+    overflow: visible;
   }
 
-  .accident-report-short-row .accident-report-guided-area,
-  .accident-report-short-row .accident-report-textarea.guided {
-    min-height: 40px;
+  .accident-report-standard-row .accident-report-textarea.compact {
+    max-height: none;
+    height: auto;
+  }
+
+  .accident-datetime-editor {
+    display: none;
+  }
+
+  .accident-datetime-print-value {
+    display: block;
+    margin: 0;
+    font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: #000;
+    word-break: break-word;
+  }
+
+  .accident-report-select-custom-inner {
+    display: none;
+  }
+
+  .accident-report-field-print-value {
+    display: block;
+    font-family: 'MBC New L', 'Malgun Gothic', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #000;
+    word-break: break-word;
   }
 }

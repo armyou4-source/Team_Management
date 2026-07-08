@@ -45,6 +45,7 @@ import {
 } from './shiftService';
 import TenureExpiryChart from './TenureExpiryChart';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
+import AccidentReportManagementPanel from './AccidentReportManagement';
 import {
   type DashboardEmployee,
   calculateAverageAgeBreakdown,
@@ -56,6 +57,7 @@ import {
 } from './teamMemberService';
 import './Dashboard.css';
 import './DepartmentManagement.css';
+import './AccidentReportManagement.css';
 
 interface DepartmentManagementProps {
   currentUser: TeamMemberProfile;
@@ -65,7 +67,7 @@ interface DepartmentManagementProps {
   loginReferenceDate: Date;
 }
 
-type SidebarView = 'department' | 'tenure' | 'retirement' | 'shift';
+type SidebarView = 'department' | 'tenure' | 'retirement' | 'shift' | 'accident';
 
 const DEPT_SUMMARY_DEPARTMENT_IDS = new Set(['보도기술팀', '중계보도솔루션파트']);
 
@@ -134,6 +136,7 @@ export default function DepartmentManagement({
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [accidentReportCount, setAccidentReportCount] = useState<number | null>(null);
 
   const departmentTree = useMemo(
     () => buildDepartmentTree(departments, currentUser.소속),
@@ -152,7 +155,7 @@ export default function DepartmentManagement({
 
   const filteredTree = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query || sidebarView === 'tenure' || retirementViewActive || sidebarView === 'shift') return departmentTree;
+    if (!query || sidebarView === 'tenure' || retirementViewActive || sidebarView === 'shift' || sidebarView === 'accident') return departmentTree;
 
     const matchingIds = new Set(
       flatDepartments
@@ -370,6 +373,23 @@ export default function DepartmentManagement({
   const openScheduleMenu = () => {
     openWorkSchedule();
   };
+
+  const toggleAccidentMenu = () => {
+    if (sidebarView === 'accident') {
+      setSidebarView('department');
+      return;
+    }
+
+    setSidebarView('accident');
+    setRetirementViewActive(false);
+    setSelectedGreenPlanYear(null);
+    setSelectedTenureMonthKey(null);
+    setSelectedTenureEmpId(null);
+  };
+
+  const handleAccidentReportCountChange = useCallback((count: number) => {
+    setAccidentReportCount(count);
+  }, []);
 
   const leaderContact = {
     name: currentUser.성명,
@@ -797,6 +817,20 @@ export default function DepartmentManagement({
               <span className="dept-tree-name">근무표</span>
             </button>
           </div>
+
+          <div className="tenure-sidebar-section">
+            <button
+              type="button"
+              className={`dept-tree-item tenure-menu-item accident-menu-item${sidebarView === 'accident' ? ' selected' : ''}`}
+              onClick={toggleAccidentMenu}
+              aria-pressed={sidebarView === 'accident'}
+            >
+              <span className="dept-tree-name">사고 보고</span>
+              {accidentReportCount !== null && (
+                <span className="dept-tree-count">{accidentReportCount}건</span>
+              )}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -865,6 +899,8 @@ export default function DepartmentManagement({
             renderRetirementOverview()
           ) : sidebarView === 'shift' ? (
             <ShiftAssignmentManagement employees={employees} />
+          ) : sidebarView === 'accident' ? (
+            <AccidentReportManagementPanel onCountChange={handleAccidentReportCountChange} />
           ) : !selectedDept ? (
             <div className="empty-state">
               <div className="empty-state-icon">🏢</div>

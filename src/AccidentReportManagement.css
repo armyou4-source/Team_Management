@@ -1,0 +1,334 @@
+.accident-report-management-main {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.accident-report-management-panel,
+.accident-report-management-detail {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  min-height: 0;
+}
+
+.accident-report-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.accident-report-management-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accident-report-management-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.accident-report-management-link {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.accident-report-management-link:hover {
+  border-color: var(--accent);
+}
+
+.accident-report-management-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.accident-report-management-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.accident-report-management-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.accident-report-management-year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.accident-report-management-year-tab {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.accident-report-management-year-tab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.accident-report-management-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accident-report-management-empty {
+  margin: 0;
+  padding: 16px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.accident-report-management-empty.error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.accident-report-year-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-height: calc(100vh - 280px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.accident-report-year-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.accident-report-year-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.accident-report-year-group-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accident-report-year-group-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.accident-report-year-group-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accident-report-year-group-list-item {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.accident-report-year-group-item {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.accident-report-year-group-item:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--bg-primary);
+}
+
+.accident-report-year-group-item.selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-primary));
+}
+
+.accident-report-year-group-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.accident-report-year-group-item-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accident-report-year-group-item-meta {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.accident-report-delete-btn {
+  flex: 0 0 auto;
+  align-self: stretch;
+  padding: 0 10px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-sm);
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.accident-report-delete-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.accident-report-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.accident-report-delete-btn.detail {
+  align-self: flex-start;
+  padding: 8px 12px;
+}
+
+.accident-report-management-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.accident-report-management-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.accident-report-management-detail-actions .accident-report-btn.secondary {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+}
+
+.accident-report-management-detail-actions .accident-report-btn.secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.accident-report-management-detail-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.accident-report-management-detail-meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.accident-report-management-detail .accident-report-reference-wrap {
+  margin: 0;
+}
+
+.accident-report-management-detail .accident-report-reference-sheet {
+  box-shadow: none;
+}
+
+@media (max-width: 1100px) {
+  .accident-report-management-main {
+    grid-template-columns: 1fr;
+  }
+
+  .accident-report-year-groups {
+    max-height: none;
+  }
+}
+
+@media print {
+  .dashboard-container.dept-management .sidebar,
+  .dashboard-container.dept-management .dept-summary-bar,
+  .accident-report-management-panel,
+  .accident-report-management-detail-header,
+  .accident-report-management-detail-actions,
+  .accident-report-delete-btn,
+  .no-print {
+    display: none !important;
+  }
+
+  .dashboard-container.dept-management,
+  .dashboard-container.dept-management .main-content,
+  .dashboard-container.dept-management .dept-detail-panel,
+  .accident-report-management-main,
+  .accident-report-management-print-root,
+  .accident-report-management-detail {
+    display: block !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .accident-report-management-detail .accident-report-reference-wrap {
+    margin: 0;
+  }
+
+  .accident-report-management-detail .accident-report-reference-sheet {
+    box-shadow: none;
+  }
+}

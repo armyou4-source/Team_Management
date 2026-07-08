@@ -169,15 +169,19 @@ export default function App() {
     );
   }
 
-  return activePage === 'department' ? (
-    <DepartmentManagement
-      currentUser={currentUser}
-      onLogout={handleLogout}
-      activePage={activePage}
-      onNavigate={setActivePage}
-      loginReferenceDate={loginReferenceDate ?? new Date()}
-    />
-  ) : (
+  if (activePage === 'department') {
+    return (
+      <DepartmentManagement
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        activePage={activePage}
+        onNavigate={setActivePage}
+        loginReferenceDate={loginReferenceDate ?? new Date()}
+      />
+    );
+  }
+
+  return (
     <Dashboard
       currentUser={currentUser}
       onLogout={handleLogout}
