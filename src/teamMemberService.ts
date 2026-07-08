@@ -9,6 +9,7 @@ export interface TeamMemberRow {
   생년월일: string | null;
   구분: string | null;
   입사일: string | null;
+  transfer_date: string | null;
 }
 
 export interface DashboardEmployee {
@@ -22,6 +23,7 @@ export interface DashboardEmployee {
   birthDate: string | null;
   category: string | null;
   hireDate: string | null;
+  transferDate: string | null;
   source: 'db';
 }
 
@@ -296,8 +298,39 @@ export const mapTeamMemberToEmployee = (row: TeamMemberRow): DashboardEmployee =
   birthDate: row.생년월일 ?? null,
   category: row.구분 ?? null,
   hireDate: row.입사일 ?? null,
+  transferDate: row.transfer_date ?? null,
   source: 'db',
 };
+};
+
+export const toTransferDateInputValue = (value: string | null | undefined): string => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return '';
+  return trimmed.slice(0, 10);
+};
+
+export const formatTransferDate = (value: string | null | undefined): string => {
+  const inputValue = toTransferDateInputValue(value);
+  if (!inputValue) return '-';
+
+  const [year, month, day] = inputValue.split('-').map((part) => Number(part));
+  if (!year || !month || !day) return inputValue;
+
+  return `${year}.${month}.${day}`;
+};
+
+export const updateTeamMemberTransferDate = async (
+  employeeId: string,
+  transferDate: string | null
+): Promise<void> => {
+  const { error } = await supabase
+    .from('team_member')
+    .update({ transfer_date: transferDate })
+    .eq('사번', employeeId);
+
+  if (error) {
+    throw error;
+  }
 };
 
 export const fetchTeamMembers = async (): Promise<DashboardEmployee[]> => {

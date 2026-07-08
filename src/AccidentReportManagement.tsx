@@ -255,6 +255,13 @@ export default function AccidentReportManagementPanel({
               <button
                 type="button"
                 className="accident-report-btn secondary"
+                onClick={() => window.open(`/report?edit=${selectedReport.id}`, '_blank', 'noopener,noreferrer')}
+              >
+                수정하기
+              </button>
+              <button
+                type="button"
+                className="accident-report-btn secondary"
                 onClick={() => window.print()}
               >
                 인쇄

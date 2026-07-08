@@ -228,7 +228,40 @@ export const isMissingAccidentReportRpcError = (error: {
 }): boolean =>
   error.code === 'PGRST202' ||
   (error.message?.includes('get_accident_report_history') ?? false) ||
-  (error.message?.includes('get_accident_worker_directory') ?? false);
+  (error.message?.includes('get_accident_worker_directory') ?? false) ||
+  (error.message?.includes('update_accident_report_by_author') ?? false);
+
+export const parseReportDateToIso = (reportDate: string): string => {
+  const match = reportDate.trim().match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})/);
+  if (!match) return '';
+
+  const year = match[1];
+  const month = match[2].padStart(2, '0');
+  const day = match[3].padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const canEditAccidentReportAsAuthor = (
+  record: AccidentReportRecord,
+  authorName: string
+): boolean => {
+  const recordAuthor = record.author_name?.trim() ?? '';
+  const currentAuthor = authorName.trim();
+  return recordAuthor !== '' && currentAuthor !== '' && recordAuthor === currentAuthor;
+};
+
+export const canEditAccidentReport = (
+  record: AccidentReportRecord,
+  authorName: string,
+  sessionSubmittedReportIds: ReadonlySet<string> = new Set()
+): boolean =>
+  sessionSubmittedReportIds.has(record.id) ||
+  canEditAccidentReportAsAuthor(record, authorName);
+
+export const loadAccidentReportFormFromRecord = (
+  record: AccidentReportRecord,
+  confirmCode: string
+): AccidentReportForm => mapRecordToForm(record, confirmCode);
 
 const ACCIDENT_REPORT_HISTORY_SELECT =
   'id, report_date, department_name, author_name, broadcast_media, accident_datetime, location, program_name, workers, accident_summary, accident_details, accident_cause, follow_up_actions, other_notes, created_at';
@@ -261,16 +294,97 @@ export const fetchAccidentReportHistory = async (
   return (data ?? []) as AccidentReportRecord[];
 };
 
-export const submitAccidentReport = async (form: AccidentReportForm): Promise<void> => {
-  if (!isConfirmCodeValid(form)) {
-    throw new Error('확인 코드를 확인해 주세요.');
-  }
-
-  const { error } = await supabase.from('accident_reports').insert(mapFormToPayload(form));
+export const fetchAccidentReportById = async (
+  reportId: string
+): Promise<AccidentReportRecord | null> => {
+  const { data, error } = await supabase
+    .from('accident_reports')
+    .select(ACCIDENT_REPORT_HISTORY_SELECT)
+    .eq('id', reportId)
+    .maybeSingle();
 
   if (error) {
     throw error;
   }
+
+  return (data as AccidentReportRecord | null) ?? null;
+};
+
+export const updateAccidentReportAsLeader = async (
+  reportId: string,
+  form: AccidentReportForm
+): Promise<void> => {
+  const { error } = await supabase
+    .from('accident_reports')
+    .update(mapFormToPayload(form))
+    .eq('id', reportId);
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const updateAccidentReportAsAuthor = async (
+  reportId: string,
+  form: AccidentReportForm
+): Promise<void> => {
+  const authorName = form.authorName.trim();
+  if (!authorName) {
+    throw new Error('보고자 이름을 입력해 주세요.');
+  }
+
+  const { error } = await supabase.rpc('update_accident_report_by_author', {
+    p_report_id: reportId,
+    p_author_name: authorName,
+    p_payload: mapFormToPayload(form),
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+
+export const updateAccidentReport = async (
+  reportId: string,
+  form: AccidentReportForm,
+  options: { asLeader?: boolean } = {}
+): Promise<void> => {
+  if (options.asLeader) {
+    try {
+      await updateAccidentReportAsLeader(reportId, form);
+      return;
+    } catch (leaderError) {
+      const code = (leaderError as { code?: string }).code;
+      if (code && code !== '42501' && code !== 'PGRST301') {
+        throw leaderError;
+      }
+    }
+  }
+
+  await updateAccidentReportAsAuthor(reportId, form);
+};
+
+export const submitAccidentReport = async (form: AccidentReportForm): Promise<string> => {
+  if (!isConfirmCodeValid(form)) {
+    throw new Error('확인 코드를 확인해 주세요.');
+  }
+
+  const { data, error } = await supabase
+    .from('accident_reports')
+    .insert(mapFormToPayload(form))
+    .select('id')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const reportId = String(data?.id ?? '').trim();
+  if (!reportId) {
+    throw new Error('제출된 보고서 ID를 받지 못했습니다.');
+  }
+
+  return reportId;
 };
 
 export const fetchAllAccidentReports = async (): Promise<AccidentReportRecord[]> => {

@@ -6,20 +6,27 @@ import {
   LOCATION_MANUAL_OPTION,
   PROGRAM_MANUAL_OPTION,
   REPORT_CONFIRM_CODE,
+  canEditAccidentReport,
   createEmptyAccidentReportForm,
+  fetchAccidentReportById,
   fetchAccidentReportHistory,
   formatAccidentReportListLabel,
   hasBodyFieldsContent,
+  hasAccidentReportFormContent,
   isConfirmCodeValid,
+  loadAccidentReportFormFromRecord,
   mapRecordToBodyFields,
   isMissingAccidentReportsTableError,
   isMissingAccidentReportRpcError,
   mapRecordToForm,
+  parseReportDateToIso,
   submitAccidentReport,
+  updateAccidentReport,
   type AccidentReportForm,
   type AccidentReportRecord,
   type BroadcastMediaOption,
 } from './accidentReportService';
+import { fetchCurrentMemberProfile } from './authService';
 import {
   calculateAccidentDurationSeconds,
   formatAccidentDurationKorean,
@@ -902,12 +909,18 @@ export default function AccidentReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitAction, setSubmitAction] = useState<'submit' | 'update' | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<AccidentReportRecord[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<AccidentReportRecord | null>(null);
   const [pasteSuccess, setPasteSuccess] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [sessionSubmittedReportIds, setSessionSubmittedReportIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [isTeamLeaderEditor, setIsTeamLeaderEditor] = useState(false);
   const flexSectionRef = useRef<HTMLDivElement>(null);
   const [flexHeights, setFlexHeights] = useState<FlexHeights>(() =>
     createFlexHeights(MIN_FLEX_ROW_HEIGHT * FLEX_ROW_KEYS.length)
@@ -927,6 +940,69 @@ export default function AccidentReportPage() {
     const observer = new ResizeObserver(syncFlexHeights);
     observer.observe(section);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      const profile = await fetchCurrentMemberProfile();
+      setIsTeamLeaderEditor(profile?.직위?.trim() === '팀장');
+    })();
+  }, []);
+
+  const loadReportForEdit = useCallback(
+    (record: AccidentReportRecord, options?: { skipConfirm?: boolean }) => {
+      if (
+        !isTeamLeaderEditor &&
+        !canEditAccidentReport(record, form.authorName, sessionSubmittedReportIds) &&
+        !options?.skipConfirm
+      ) {
+        setSubmitError('보고자 이름이 일치하는 보고서만 수정할 수 있습니다.');
+        return false;
+      }
+
+      const nextForm = loadAccidentReportFormFromRecord(record, form.confirmCode);
+      setForm(nextForm);
+      setReportDateIso(parseReportDateToIso(nextForm.reportDate));
+      setEditingReportId(record.id);
+      setSubmitSuccess(false);
+      setPasteSuccess(false);
+      setSubmitError(null);
+      return true;
+    },
+    [form.authorName, form.confirmCode, isTeamLeaderEditor, sessionSubmittedReportIds]
+  );
+
+  useEffect(() => {
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (!editId) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const record = await fetchAccidentReportById(editId);
+        if (cancelled) return;
+
+        if (!record) {
+          setSubmitError('수정할 보고서를 찾을 수 없습니다.');
+          return;
+        }
+
+        const nextForm = loadAccidentReportFormFromRecord(record, '');
+        setForm(nextForm);
+        setReportDateIso(parseReportDateToIso(nextForm.reportDate));
+        setEditingReportId(record.id);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : '수정할 보고서를 불러오지 못했습니다.';
+        setSubmitError(message);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleFlexRowResize = useCallback((key: FlexRowKey, nextHeight: number) => {
@@ -985,6 +1061,7 @@ export default function AccidentReportPage() {
 
   const handleReset = () => {
     setReportDateIso('');
+    setEditingReportId(null);
     setForm((prev) => ({
       ...createEmptyAccidentReportForm(),
       confirmCode: prev.confirmCode,
@@ -1031,6 +1108,38 @@ export default function AccidentReportPage() {
     closeHistoryModal();
   };
 
+  const handleEditFromHistory = () => {
+    if (!selectedHistoryRecord) return;
+
+    if (
+      !isTeamLeaderEditor &&
+      !canEditAccidentReport(selectedHistoryRecord, form.authorName, sessionSubmittedReportIds)
+    ) {
+      setSubmitError('보고자 이름이 일치하는 보고서만 수정할 수 있습니다.');
+      return;
+    }
+
+    if ((hasAccidentReportFormContent(form) || editingReportId) &&
+      !window.confirm('현재 작성 중인 내용을 선택한 보고서로 바꿔 수정할까요?')) {
+      return;
+    }
+
+    if (!loadReportForEdit(selectedHistoryRecord, { skipConfirm: true })) {
+      return;
+    }
+
+    closeHistoryModal();
+  };
+
+  const canEditSelectedHistory =
+    !!selectedHistoryRecord &&
+    (isTeamLeaderEditor ||
+      canEditAccidentReport(
+        selectedHistoryRecord,
+        form.authorName,
+        sessionSubmittedReportIds
+      ));
+
   const handleOpenHistory = async () => {
     if (!isConfirmCodeValid(form)) {
       setSubmitError('확인 코드를 먼저 입력해 주세요.');
@@ -1074,15 +1183,43 @@ export default function AccidentReportPage() {
     setSubmitSuccess(false);
 
     try {
-      await submitAccidentReport(form);
-      setSubmitSuccess(true);
+      if (editingReportId) {
+        await updateAccidentReport(editingReportId, form, { asLeader: isTeamLeaderEditor });
+        setSubmitAction('update');
+        setSubmitSuccess(true);
+        setSessionSubmittedReportIds((prev) => {
+          const next = new Set(prev);
+          next.add(editingReportId);
+          return next;
+        });
+        setEditingReportId(null);
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        const submittedReportId = await submitAccidentReport(form);
+        setSessionSubmittedReportIds((prev) => {
+          const next = new Set(prev);
+          next.add(submittedReportId);
+          return next;
+        });
+        setSubmitAction('submit');
+        setSubmitSuccess(true);
+      }
     } catch (err: unknown) {
       if (isMissingAccidentReportsTableError(err as { code?: string; message?: string })) {
         setSubmitError(
           'accident_reports 테이블이 없습니다. Supabase SQL Editor에서 supabase/migrations/009_create_accident_reports.sql 과 010_expand_accident_reports.sql 을 실행해 주세요.'
         );
+      } else if (isMissingAccidentReportRpcError(err as { code?: string; message?: string })) {
+        setSubmitError(
+          '보고서 수정 기능이 준비되지 않았습니다. Supabase SQL Editor에서 supabase/migrations/016_accident_reports_update.sql 을 실행해 주세요.'
+        );
       } else {
-        const message = err instanceof Error ? err.message : '보고서 제출에 실패했습니다.';
+        const message =
+          err instanceof Error
+            ? err.message
+            : editingReportId
+              ? '보고서 수정에 실패했습니다.'
+              : '보고서 제출에 실패했습니다.';
         setSubmitError(message);
       }
     } finally {
@@ -1117,9 +1254,13 @@ export default function AccidentReportPage() {
 
       <div className="accident-report-toolbar no-print">
         <div className="accident-report-toolbar-left">
-          <h1 className="accident-report-toolbar-title">방송사고 보고서 작성</h1>
+          <h1 className="accident-report-toolbar-title">
+            {editingReportId ? '방송사고 보고서 수정' : '방송사고 보고서 작성'}
+          </h1>
           <p className="accident-report-toolbar-desc">
-            작성 후 제출하면 서버에 저장됩니다. 인쇄는 인쇄 버튼을 사용해 주세요.
+            {editingReportId
+              ? '내용을 수정한 뒤 수정 완료를 누르면 저장됩니다.'
+              : '작성 후 제출하면 서버에 저장됩니다. 인쇄는 인쇄 버튼을 사용해 주세요.'}
           </p>
         </div>
         <div className="accident-report-toolbar-actions">
@@ -1143,7 +1284,13 @@ export default function AccidentReportPage() {
             onClick={() => void handleSubmit()}
             disabled={!canSubmit || submitting}
           >
-            {submitting ? '제출 중...' : '제출하기'}
+            {submitting
+              ? editingReportId
+                ? '수정 중...'
+                : '제출 중...'
+              : editingReportId
+                ? '수정 완료'
+                : '제출하기'}
           </button>
         </div>
       </div>
@@ -1163,11 +1310,20 @@ export default function AccidentReportPage() {
                 </h2>
                 <p className="accident-report-modal-desc">
                   {selectedHistoryRecord
-                    ? '참고용으로 표시됩니다. 하단 내용 보고서에 붙혀넣기로 현재 보고서에 복사할 수 있습니다.'
+                    ? '참고용으로 표시됩니다. 수정하기로 전체 보고서를 불러오거나, 하단 내용만 붙여넣을 수 있습니다.'
                     : '참고용으로만 표시됩니다. 현재 작성 중인 보고서는 자동으로 변경되지 않습니다.'}
                 </p>
               </div>
               <div className="accident-report-modal-header-actions">
+                {selectedHistoryRecord && canEditSelectedHistory && (
+                  <button
+                    type="button"
+                    className="accident-report-btn secondary"
+                    onClick={handleEditFromHistory}
+                  >
+                    수정하기
+                  </button>
+                )}
                 {selectedHistoryRecord && (
                   <button
                     type="button"
@@ -1231,7 +1387,7 @@ export default function AccidentReportPage() {
       {submitError && <p className="accident-report-feedback error no-print">{submitError}</p>}
       {submitSuccess && (
         <p className="accident-report-feedback success no-print">
-          보고서가 제출되었습니다.
+          {submitAction === 'update' ? '보고서가 수정되었습니다.' : '보고서가 제출되었습니다.'}
         </p>
       )}
 

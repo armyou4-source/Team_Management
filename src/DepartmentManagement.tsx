@@ -53,7 +53,10 @@ import {
   fetchTeamMembers,
   formatEmployeeId,
   formatMemberAge,
+  formatTransferDate,
   normalizeMemberCategory,
+  toTransferDateInputValue,
+  updateTeamMemberTransferDate,
 } from './teamMemberService';
 import './Dashboard.css';
 import './DepartmentManagement.css';
@@ -136,6 +139,7 @@ export default function DepartmentManagement({
   const [dataLoading, setDataLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [savingTransferDateId, setSavingTransferDateId] = useState<string | null>(null);
   const [accidentReportCount, setAccidentReportCount] = useState<number | null>(null);
 
   const departmentTree = useMemo(
@@ -390,6 +394,25 @@ export default function DepartmentManagement({
   const handleAccidentReportCountChange = useCallback((count: number) => {
     setAccidentReportCount(count);
   }, []);
+
+  const handleTransferDateChange = async (memberId: string, value: string) => {
+    const transferDate = value.trim() || null;
+    setSavingTransferDateId(memberId);
+
+    try {
+      await updateTeamMemberTransferDate(memberId, transferDate);
+      setEmployees((prev) =>
+        prev.map((employee) =>
+          employee.id === memberId ? { ...employee, transferDate } : employee
+        )
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '전입일 저장에 실패했습니다.';
+      alert(message);
+    } finally {
+      setSavingTransferDateId(null);
+    }
+  };
 
   const leaderContact = {
     name: currentUser.성명,
@@ -942,6 +965,7 @@ export default function DepartmentManagement({
                     <tr>
                       <th>이름</th>
                       <th>직급</th>
+                      <th>전입일</th>
                       {showMemberDutyColumn && <th>직무</th>}
                       <th>나이</th>
                       <th>사번</th>
@@ -952,6 +976,27 @@ export default function DepartmentManagement({
                       <tr key={member.id}>
                         <td>{member.name}</td>
                         <td>{member.position}</td>
+                        <td className="dept-member-transfer-date">
+                          <label className="dept-member-transfer-date-field">
+                            <span
+                              className={`dept-member-transfer-date-text${
+                                member.transferDate ? '' : ' placeholder'
+                              }`}
+                            >
+                              {formatTransferDate(member.transferDate)}
+                            </span>
+                            <input
+                              type="date"
+                              className="dept-member-transfer-date-input"
+                              value={toTransferDateInputValue(member.transferDate)}
+                              onChange={(event) =>
+                                void handleTransferDateChange(member.id, event.target.value)
+                              }
+                              disabled={savingTransferDateId === member.id}
+                              aria-label={`${member.name} 전입일`}
+                            />
+                          </label>
+                        </td>
                         {showMemberDutyColumn && (
                           <td className="dept-member-duty">
                             {getMemberDutyLabel(member.id, memberDutyLabelsMap)}
