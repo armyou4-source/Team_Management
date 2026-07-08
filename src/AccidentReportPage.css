@@ -878,6 +878,18 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.accident-report-modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding: 12px 18px 16px;
+  border-top: 1px solid #d1d5db;
+  background: #fff;
 }
 
 .accident-report-modal-body {

@@ -1111,14 +1111,6 @@ export default function AccidentReportPage() {
   const handleEditFromHistory = () => {
     if (!selectedHistoryRecord) return;
 
-    if (
-      !isTeamLeaderEditor &&
-      !canEditAccidentReport(selectedHistoryRecord, form.authorName, sessionSubmittedReportIds)
-    ) {
-      setSubmitError('보고자 이름이 일치하는 보고서만 수정할 수 있습니다.');
-      return;
-    }
-
     if ((hasAccidentReportFormContent(form) || editingReportId) &&
       !window.confirm('현재 작성 중인 내용을 선택한 보고서로 바꿔 수정할까요?')) {
       return;
@@ -1130,15 +1122,6 @@ export default function AccidentReportPage() {
 
     closeHistoryModal();
   };
-
-  const canEditSelectedHistory =
-    !!selectedHistoryRecord &&
-    (isTeamLeaderEditor ||
-      canEditAccidentReport(
-        selectedHistoryRecord,
-        form.authorName,
-        sessionSubmittedReportIds
-      ));
 
   const handleOpenHistory = async () => {
     if (!isConfirmCodeValid(form)) {
@@ -1315,7 +1298,7 @@ export default function AccidentReportPage() {
                 </p>
               </div>
               <div className="accident-report-modal-header-actions">
-                {selectedHistoryRecord && canEditSelectedHistory && (
+                {selectedHistoryRecord && (
                   <button
                     type="button"
                     className="accident-report-btn secondary"
@@ -1374,6 +1357,25 @@ export default function AccidentReportPage() {
 
               {selectedHistoryRecord && <AccidentReportReferenceSheet record={selectedHistoryRecord} />}
             </div>
+
+            {selectedHistoryRecord && (
+              <div className="accident-report-modal-footer no-print">
+                <button
+                  type="button"
+                  className="accident-report-btn secondary"
+                  onClick={handleEditFromHistory}
+                >
+                  수정하기
+                </button>
+                <button
+                  type="button"
+                  className="accident-report-btn primary"
+                  onClick={handlePasteBodyFromHistory}
+                >
+                  하단 내용 보고서에 붙혀넣기
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
