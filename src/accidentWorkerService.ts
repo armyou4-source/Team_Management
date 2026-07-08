@@ -1,10 +1,4 @@
 import { supabase } from './supabaseClient';
-import { fetchTeamMembers } from './teamMemberService';
-import {
-  buildMemberDutyLabelsMap,
-  fetchShiftMembers,
-  type ShiftMemberRow,
-} from './shiftService';
 
 export interface AccidentWorkerProfile {
   memberId: string;
@@ -28,8 +22,7 @@ export const isFormattedWorkerLine = (text: string): boolean =>
   FORMATTED_WORKER_LINE_PATTERN.test(text.trim());
 
 export const formatAccidentWorkerLine = (profile: AccidentWorkerProfile): string => {
-  const duty =
-    profile.duties.length > 0 ? profile.duties.join(', ') : '-';
+  const duty = profile.duties.length > 0 ? profile.duties.join(', ') : '-';
   return `${profile.department} ${profile.name} ${profile.grade}_${duty}`;
 };
 
@@ -71,36 +64,6 @@ export const replaceCurrentWorkerSegment = (
   };
 };
 
-const buildProfilesFromSources = (
-  employees: Array<{
-    id: string;
-    name: string;
-    grade: string | null;
-    position: string;
-    department: string;
-  }>,
-  shiftRows: ShiftMemberRow[]
-): AccidentWorkerProfile[] => {
-  const dutyMap = buildMemberDutyLabelsMap(
-    shiftRows,
-    employees.map((employee) => ({
-      id: employee.id,
-      displayId: employee.id,
-    }))
-  );
-
-  return employees
-    .filter((employee) => employee.name.trim())
-    .map((employee) => ({
-      memberId: employee.id,
-      name: employee.name.trim(),
-      grade: employee.grade?.trim() || employee.position.trim() || '사원',
-      department: employee.department.trim() || '미지정',
-      duties: dutyMap.get(employee.id) ?? [],
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-};
-
 const mapDirectoryRow = (row: AccidentWorkerDirectoryRow): AccidentWorkerProfile => ({
   memberId: String(row.member_id ?? '').trim(),
   name: String(row.name ?? '').trim(),
@@ -114,22 +77,23 @@ const mapDirectoryRow = (row: AccidentWorkerDirectoryRow): AccidentWorkerProfile
 export const fetchAccidentWorkerProfiles = async (): Promise<AccidentWorkerProfile[]> => {
   const { data, error } = await supabase.rpc('get_accident_worker_directory');
 
-  if (!error && Array.isArray(data)) {
-    return (data as AccidentWorkerDirectoryRow[])
-      .map(mapDirectoryRow)
-      .filter((profile) => profile.name)
-      .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  if (error) {
+    if (error.code === 'PGRST202') {
+      throw new Error(
+        '근무자 목록을 불러올 수 없습니다. Supabase SQL Editor에서 supabase/migrations/015_accident_report_public_reads.sql 을 실행해 주세요.'
+      );
+    }
+    throw error;
   }
 
-  try {
-    const [employees, shiftRows] = await Promise.all([
-      fetchTeamMembers(),
-      fetchShiftMembers(),
-    ]);
-    return buildProfilesFromSources(employees, shiftRows);
-  } catch {
+  if (!Array.isArray(data)) {
     return [];
   }
+
+  return (data as AccidentWorkerDirectoryRow[])
+    .map(mapDirectoryRow)
+    .filter((profile) => profile.name)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 };
 
 export const searchWorkerProfiles = (
@@ -184,7 +148,6 @@ export const expandWorkerSegments = (
     .join('');
 
 export const formatWorkerSuggestionLabel = (profile: AccidentWorkerProfile): string => {
-  const duty =
-    profile.duties.length > 0 ? profile.duties.join(', ') : '-';
+  const duty = profile.duties.length > 0 ? profile.duties.join(', ') : '-';
   return `${profile.name} · ${profile.department} · ${profile.grade} · ${duty}`;
 };

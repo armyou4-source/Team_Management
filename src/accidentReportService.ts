@@ -222,6 +222,45 @@ export const isMissingAccidentReportsTableError = (error: {
 }): boolean =>
   error.code === 'PGRST205' || (error.message?.includes('accident_reports') ?? false);
 
+export const isMissingAccidentReportRpcError = (error: {
+  code?: string;
+  message?: string;
+}): boolean =>
+  error.code === 'PGRST202' ||
+  (error.message?.includes('get_accident_report_history') ?? false) ||
+  (error.message?.includes('get_accident_worker_directory') ?? false);
+
+const ACCIDENT_REPORT_HISTORY_SELECT =
+  'id, report_date, department_name, author_name, broadcast_media, accident_datetime, location, program_name, workers, accident_summary, accident_details, accident_cause, follow_up_actions, other_notes, created_at';
+
+export const fetchAccidentReportHistory = async (
+  limit = 20
+): Promise<AccidentReportRecord[]> => {
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    'get_accident_report_history',
+    { p_limit: limit }
+  );
+
+  if (!rpcError && Array.isArray(rpcData)) {
+    return rpcData as AccidentReportRecord[];
+  }
+
+  const { data, error } = await supabase
+    .from('accident_reports')
+    .select(ACCIDENT_REPORT_HISTORY_SELECT)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (rpcError && isMissingAccidentReportRpcError(rpcError)) {
+      throw rpcError;
+    }
+    throw error;
+  }
+
+  return (data ?? []) as AccidentReportRecord[];
+};
+
 export const submitAccidentReport = async (form: AccidentReportForm): Promise<void> => {
   if (!isConfirmCodeValid(form)) {
     throw new Error('확인 코드를 확인해 주세요.');
@@ -232,24 +271,6 @@ export const submitAccidentReport = async (form: AccidentReportForm): Promise<vo
   if (error) {
     throw error;
   }
-};
-
-export const fetchAccidentReportHistory = async (
-  limit = 20
-): Promise<AccidentReportRecord[]> => {
-  const { data, error } = await supabase
-    .from('accident_reports')
-    .select(
-      'id, report_date, department_name, author_name, broadcast_media, accident_datetime, location, program_name, workers, accident_summary, accident_details, accident_cause, follow_up_actions, other_notes, created_at'
-    )
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw error;
-  }
-
-  return (data ?? []) as AccidentReportRecord[];
 };
 
 export const fetchAllAccidentReports = async (): Promise<AccidentReportRecord[]> => {

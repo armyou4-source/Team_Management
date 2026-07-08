@@ -13,6 +13,7 @@ import {
   isConfirmCodeValid,
   mapRecordToBodyFields,
   isMissingAccidentReportsTableError,
+  isMissingAccidentReportRpcError,
   mapRecordToForm,
   submitAccidentReport,
   type AccidentReportForm,
@@ -588,6 +589,7 @@ function WorkersField({
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [profiles, setProfiles] = useState<AccidentWorkerProfile[]>([]);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<AccidentWorkerProfile[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -597,10 +599,20 @@ function WorkersField({
 
     fetchAccidentWorkerProfiles()
       .then((entries) => {
-        if (!cancelled) setProfiles(entries);
+        if (!cancelled) {
+          setProfiles(entries);
+          setProfilesError(null);
+        }
       })
-      .catch(() => {
-        if (!cancelled) setProfiles([]);
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setProfiles([]);
+          const message =
+            err instanceof Error
+              ? err.message
+              : '근무자 목록을 불러오지 못했습니다.';
+          setProfilesError(message);
+        }
       });
 
     return () => {
@@ -719,6 +731,11 @@ function WorkersField({
         data-lpignore="true"
         data-form-type="other"
       />
+      {profilesError && (
+        <p className="accident-report-workers-error" role="status">
+          {profilesError}
+        </p>
+      )}
       {menuOpen && suggestions.length > 0 && (
         <ul
           className="accident-report-workers-menu"
@@ -1033,6 +1050,10 @@ export default function AccidentReportPage() {
       if (isMissingAccidentReportsTableError(err as { code?: string; message?: string })) {
         setHistoryError(
           'accident_reports 테이블이 없습니다. Supabase SQL Editor에서 supabase/migrations/009_create_accident_reports.sql 과 010_expand_accident_reports.sql 을 실행해 주세요.'
+        );
+      } else if (isMissingAccidentReportRpcError(err as { code?: string; message?: string })) {
+        setHistoryError(
+          '지난 사고 목록을 불러올 수 없습니다. Supabase SQL Editor에서 supabase/migrations/015_accident_report_public_reads.sql 을 실행해 주세요.'
         );
       } else {
         const message =
