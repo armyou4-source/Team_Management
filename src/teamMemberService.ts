@@ -309,14 +309,108 @@ export const toTransferDateInputValue = (value: string | null | undefined): stri
   return trimmed.slice(0, 10);
 };
 
+export const parseTransferDateParts = (
+  value: string | null | undefined
+): { year: number; month: number; day: number } | null => {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed || trimmed === '-') return null;
+
+  let year: number;
+  let month: number;
+  let day: number;
+
+  const delimited = trimmed.match(/^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/);
+  if (delimited) {
+    year = Number(delimited[1]);
+    month = Number(delimited[2]);
+    day = Number(delimited[3]);
+  } else if (/^\d{8}$/.test(trimmed)) {
+    year = Number(trimmed.slice(0, 4));
+    month = Number(trimmed.slice(4, 6));
+    day = Number(trimmed.slice(6, 8));
+  } else {
+    const isoValue = toTransferDateInputValue(trimmed);
+    const isoMatch = isoValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!isoMatch) return null;
+    year = Number(isoMatch[1]);
+    month = Number(isoMatch[2]);
+    day = Number(isoMatch[3]);
+  }
+
+  if (!year || !month || !day) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+};
+
+/** 입력값을 DB 저장용 YYYY-MM-DD 로 정규화. 빈 값은 null. 잘못된 형식이면 null 반환과 함께 invalid 플래그 용도로 Error를 throw하지 않고 호출측에서 판별 */
+export const normalizeTransferDateInput = (
+  value: string
+): { ok: true; transferDate: string | null } | { ok: false } => {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === '-') {
+    return { ok: true, transferDate: null };
+  }
+
+  const parts = parseTransferDateParts(trimmed);
+  if (!parts) return { ok: false };
+
+  const month = String(parts.month).padStart(2, '0');
+  const day = String(parts.day).padStart(2, '0');
+  return { ok: true, transferDate: `${parts.year}-${month}-${day}` };
+};
+
 export const formatTransferDate = (value: string | null | undefined): string => {
-  const inputValue = toTransferDateInputValue(value);
-  if (!inputValue) return '-';
+  const parts = parseTransferDateParts(value);
+  if (!parts) return '-';
 
-  const [year, month, day] = inputValue.split('-').map((part) => Number(part));
-  if (!year || !month || !day) return inputValue;
+  return `${parts.year}.${parts.month}.${parts.day}`;
+};
 
-  return `${year}.${month}.${day}`;
+export const getKstDateParts = (
+  referenceDate: Date
+): { year: number; month: number; day: number } => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const [year, month, day] = formatter.format(referenceDate).split('-').map(Number);
+  return { year, month, day };
+};
+
+/** 전입일 기준 근속기간. 대한민국 표준시(Asia/Seoul) 기준 '5년 8개월' 형식 */
+export const formatTransferTenure = (
+  transferDateValue: string | null | undefined,
+  referenceDate: Date = new Date()
+): string => {
+  const transfer = parseTransferDateParts(transferDateValue);
+  if (!transfer) return '';
+
+  const now = getKstDateParts(referenceDate);
+  let years = now.year - transfer.year;
+  let months = now.month - transfer.month;
+
+  if (now.day < transfer.day) {
+    months -= 1;
+  }
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+  if (years < 0) return '';
+
+  return `${years}년 ${months}개월`;
 };
 
 export const updateTeamMemberTransferDate = async (

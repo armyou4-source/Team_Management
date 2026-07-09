@@ -54,8 +54,9 @@ import {
   formatEmployeeId,
   formatMemberAge,
   formatTransferDate,
+  formatTransferTenure,
   normalizeMemberCategory,
-  toTransferDateInputValue,
+  normalizeTransferDateInput,
   updateTeamMemberTransferDate,
 } from './teamMemberService';
 import './Dashboard.css';
@@ -140,6 +141,7 @@ export default function DepartmentManagement({
   const [dataError, setDataError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [savingTransferDateId, setSavingTransferDateId] = useState<string | null>(null);
+  const [transferDateDrafts, setTransferDateDrafts] = useState<Record<string, string>>({});
   const [accidentReportCount, setAccidentReportCount] = useState<number | null>(null);
 
   const departmentTree = useMemo(
@@ -395,8 +397,40 @@ export default function DepartmentManagement({
     setAccidentReportCount(count);
   }, []);
 
-  const handleTransferDateChange = async (memberId: string, value: string) => {
-    const transferDate = value.trim() || null;
+  const getTransferDateDraft = (member: DashboardEmployee): string => {
+    if (Object.prototype.hasOwnProperty.call(transferDateDrafts, member.id)) {
+      return transferDateDrafts[member.id];
+    }
+    return member.transferDate ? formatTransferDate(member.transferDate) : '';
+  };
+
+  const handleTransferDateDraftChange = (memberId: string, value: string) => {
+    setTransferDateDrafts((prev) => ({ ...prev, [memberId]: value }));
+  };
+
+  const commitTransferDate = async (memberId: string, rawValue: string) => {
+    const parsed = normalizeTransferDateInput(rawValue);
+    if (!parsed.ok) {
+      alert('전입일 형식이 올바르지 않습니다. 예: 2020.3.15');
+      const current = employees.find((employee) => employee.id === memberId)?.transferDate ?? null;
+      setTransferDateDrafts((prev) => ({
+        ...prev,
+        [memberId]: current ? formatTransferDate(current) : '',
+      }));
+      return;
+    }
+
+    const transferDate = parsed.transferDate;
+    const current = employees.find((employee) => employee.id === memberId)?.transferDate ?? null;
+    if (transferDate === current) {
+      setTransferDateDrafts((prev) => {
+        const next = { ...prev };
+        delete next[memberId];
+        return next;
+      });
+      return;
+    }
+
     setSavingTransferDateId(memberId);
 
     try {
@@ -406,6 +440,11 @@ export default function DepartmentManagement({
           employee.id === memberId ? { ...employee, transferDate } : employee
         )
       );
+      setTransferDateDrafts((prev) => {
+        const next = { ...prev };
+        delete next[memberId];
+        return next;
+      });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '전입일 저장에 실패했습니다.';
       alert(message);
@@ -972,30 +1011,43 @@ export default function DepartmentManagement({
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedMembers.map((member) => (
+                    {selectedMembers.map((member) => {
+                      const transferTenure = formatTransferTenure(
+                        member.transferDate,
+                        loginReferenceDate
+                      );
+
+                      return (
                       <tr key={member.id}>
                         <td>{member.name}</td>
                         <td>{member.position}</td>
                         <td className="dept-member-transfer-date">
-                          <label className="dept-member-transfer-date-field">
-                            <span
-                              className={`dept-member-transfer-date-text${
-                                member.transferDate ? '' : ' placeholder'
-                              }`}
-                            >
-                              {formatTransferDate(member.transferDate)}
-                            </span>
+                          <div className="dept-member-transfer-date-row">
                             <input
-                              type="date"
-                              className="dept-member-transfer-date-input"
-                              value={toTransferDateInputValue(member.transferDate)}
+                              type="text"
+                              className="dept-member-transfer-date-text-input"
+                              value={getTransferDateDraft(member)}
                               onChange={(event) =>
-                                void handleTransferDateChange(member.id, event.target.value)
+                                handleTransferDateDraftChange(member.id, event.target.value)
                               }
+                              onBlur={(event) =>
+                                void commitTransferDate(member.id, event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                  event.currentTarget.blur();
+                                }
+                              }}
+                              placeholder="예: 2020.3.15"
                               disabled={savingTransferDateId === member.id}
                               aria-label={`${member.name} 전입일`}
                             />
-                          </label>
+                            {transferTenure ? (
+                              <span className="dept-member-transfer-tenure">
+                                {transferTenure}
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
                         {showMemberDutyColumn && (
                           <td className="dept-member-duty">
@@ -1005,7 +1057,8 @@ export default function DepartmentManagement({
                         <td>{formatMemberAge(member.birthDate, loginReferenceDate)}</td>
                         <td>{member.displayId}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
