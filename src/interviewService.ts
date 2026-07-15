@@ -1,6 +1,6 @@
 import { supabase } from './supabaseClient';
 
-export type InterviewStatus = '미입력' | '작성중' | '저장완료' | '대상외';
+export type InterviewStatus = '미입력' | '면담완료' | '작성중' | '저장완료' | '대상외';
 
 export const INTERVIEW_PURPOSE_OPTIONS = ['중간평가', '성과평가', '수시면담'] as const;
 export type InterviewPurpose = (typeof INTERVIEW_PURPOSE_OPTIONS)[number];

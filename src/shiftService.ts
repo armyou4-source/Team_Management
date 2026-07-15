@@ -11,7 +11,7 @@ export const STANDARD_SHIFT_ROLES = [
   '조명',
 ] as const;
 
-export const STANDING_SHIFT_ROLES = ['AR/XR', '정비', '중계', '마이크', '사무실'] as const;
+export const STANDING_SHIFT_ROLES = ['AR/XR', '정비', '중계', '마이크', '사무실', '안식년'] as const;
 
 export const ROTATING_SHIFT_SECTION_LABEL = '교대근무';
 export const ROTATING_SHIFT_WORK_TYPE = '탄력근로';
@@ -22,6 +22,7 @@ export const STANDING_SHIFT_WORK_TYPES: Record<StandingShiftRole, string> = {
   중계: '선택근로',
   마이크: '시차근로',
   사무실: '통상근로',
+  안식년: '통상근로',
 };
 
 export type ShiftWorkType =

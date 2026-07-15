@@ -212,6 +212,10 @@
   border-left-color: #f97316;
 }
 
+.employee-item.status-completed {
+  border-left-color: #0ea5e9;
+}
+
 .employee-item.status-draft {
   border-left-color: #eab308;
 }
@@ -316,6 +320,12 @@
   border-color: #fdba74;
 }
 
+.interview-status.completed {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
 .interview-status.draft {
   background-color: #fef9c3;
   color: #a16207;
@@ -339,6 +349,12 @@
     background-color: rgba(249, 115, 22, 0.2);
     color: #fb923c;
     border-color: rgba(251, 146, 60, 0.45);
+  }
+
+  .interview-status.completed {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.45);
   }
 
   .interview-status.draft {
@@ -459,6 +475,11 @@
   background: #fff7ed;
 }
 
+.summary-stat.stat-completed {
+  border-color: #7dd3fc;
+  background: #f0f9ff;
+}
+
 .summary-stat.stat-draft {
   border-color: #fde047;
   background: #fefce8;
@@ -491,6 +512,10 @@
 
 .summary-stat.stat-empty .summary-stat-value {
   color: #c2410c;
+}
+
+.summary-stat.stat-completed .summary-stat-value {
+  color: #0369a1;
 }
 
 .summary-stat.stat-draft .summary-stat-value {
@@ -781,6 +806,18 @@
   border-color: #fde68a;
   background: #fef3c7;
   color: #b45309;
+}
+
+.form-btn.complete {
+  border-color: #7dd3fc;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.form-btn.complete:hover:not(:disabled) {
+  background: #bae6fd;
+  border-color: #38bdf8;
+  color: #075985;
 }
 
 .form-btn.reset {

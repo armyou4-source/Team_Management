@@ -838,12 +838,21 @@ export default function DepartmentManagement({
           <div className="tenure-sidebar-section">
             <button
               type="button"
-              className={`dept-tree-item tenure-menu-item${sidebarView === 'tenure' ? ' selected' : ''}`}
-              onClick={toggleTenureMenu}
-              aria-pressed={sidebarView === 'tenure'}
+              className={`dept-tree-item tenure-menu-item shift-menu-item${sidebarView === 'shift' ? ' selected' : ''}`}
+              onClick={toggleShiftMenu}
+              aria-pressed={sidebarView === 'shift'}
             >
-              <span className="dept-tree-name">계약직 파견직 근무현황</span>
-              <span className="dept-tree-count">{tenureStatuses.length}명</span>
+              <span className="dept-tree-name">근무조 및 직무 편성</span>
+            </button>
+          </div>
+
+          <div className="tenure-sidebar-section">
+            <button
+              type="button"
+              className="dept-tree-item tenure-menu-item schedule-menu-item"
+              onClick={openScheduleMenu}
+            >
+              <span className="dept-tree-name">근무표</span>
             </button>
           </div>
 
@@ -862,21 +871,12 @@ export default function DepartmentManagement({
           <div className="tenure-sidebar-section">
             <button
               type="button"
-              className={`dept-tree-item tenure-menu-item shift-menu-item${sidebarView === 'shift' ? ' selected' : ''}`}
-              onClick={toggleShiftMenu}
-              aria-pressed={sidebarView === 'shift'}
+              className={`dept-tree-item tenure-menu-item${sidebarView === 'tenure' ? ' selected' : ''}`}
+              onClick={toggleTenureMenu}
+              aria-pressed={sidebarView === 'tenure'}
             >
-              <span className="dept-tree-name">근무조 및 직무 편성</span>
-            </button>
-          </div>
-
-          <div className="tenure-sidebar-section">
-            <button
-              type="button"
-              className="dept-tree-item tenure-menu-item schedule-menu-item"
-              onClick={openScheduleMenu}
-            >
-              <span className="dept-tree-name">근무표</span>
+              <span className="dept-tree-name">계약직 파견직 근무현황</span>
+              <span className="dept-tree-count">{tenureStatuses.length}명</span>
             </button>
           </div>
 
@@ -1004,8 +1004,8 @@ export default function DepartmentManagement({
                     <tr>
                       <th>이름</th>
                       <th>직급</th>
-                      <th>전입일</th>
                       {showMemberDutyColumn && <th>직무</th>}
+                      <th>전입일</th>
                       <th>나이</th>
                       <th>사번</th>
                     </tr>
@@ -1021,6 +1021,11 @@ export default function DepartmentManagement({
                       <tr key={member.id}>
                         <td>{member.name}</td>
                         <td>{member.position}</td>
+                        {showMemberDutyColumn && (
+                          <td className="dept-member-duty">
+                            {getMemberDutyLabel(member.id, memberDutyLabelsMap)}
+                          </td>
+                        )}
                         <td className="dept-member-transfer-date">
                           <div className="dept-member-transfer-date-row">
                             <input
@@ -1049,11 +1054,6 @@ export default function DepartmentManagement({
                             ) : null}
                           </div>
                         </td>
-                        {showMemberDutyColumn && (
-                          <td className="dept-member-duty">
-                            {getMemberDutyLabel(member.id, memberDutyLabelsMap)}
-                          </td>
-                        )}
                         <td>{formatMemberAge(member.birthDate, loginReferenceDate)}</td>
                         <td>{member.displayId}</td>
                       </tr>

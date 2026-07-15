@@ -80,6 +80,8 @@ const getHistoryPreview = (form: InterviewForm): string => {
 
 const getStatusClass = (status: InterviewStatus): string => {
   switch (status) {
+    case '면담완료':
+      return 'completed';
     case '작성중':
       return 'draft';
     case '저장완료':
@@ -226,6 +228,7 @@ export default function Dashboard({
   const summaryStats = useMemo(() => {
     const counts: Record<InterviewStatus, number> = {
       미입력: 0,
+      면담완료: 0,
       작성중: 0,
       저장완료: 0,
       대상외: 0,
@@ -262,7 +265,11 @@ export default function Dashboard({
   const selectEmployee = (emp: Employee) => {
     setSelectedEmpId(emp.id);
     const record = getRecordForEmployee(emp);
-    if (record?.status === '작성중' && hasFormContent(record.form)) {
+    if (
+      record &&
+      (record.status === '작성중' || record.status === '면담완료') &&
+      (record.status === '면담완료' || hasFormContent(record.form))
+    ) {
       setForm({
         ...record.form,
         purpose: normalizeInterviewPurpose(record.form.purpose),
@@ -406,6 +413,25 @@ export default function Dashboard({
       '면담 기록이 초기화되었습니다.'
     );
     setForm(resetForm);
+  };
+
+  const handleInterviewComplete = async () => {
+    if (!selectedEmp) {
+      alert('면담 대상 사원을 선택해주세요.');
+      return;
+    }
+
+    const completedForm: InterviewForm = {
+      ...form,
+      date: form.date || new Date().toISOString().split('T')[0],
+    };
+    await upsertInterviewRecord(
+      selectedEmp,
+      completedForm,
+      '면담완료',
+      '면담 완료로 표시되었습니다. 이어서 면담 기록을 작성해 주세요.'
+    );
+    setForm(completedForm);
   };
 
   const handleDraftSave = async () => {
@@ -575,6 +601,10 @@ export default function Dashboard({
         <div className="summary-stat stat-empty">
           <div className="summary-stat-label">미입력</div>
           <div className="summary-stat-value">{summaryStats.미입력}</div>
+        </div>
+        <div className="summary-stat stat-completed">
+          <div className="summary-stat-label">면담 완료</div>
+          <div className="summary-stat-value">{summaryStats.면담완료}</div>
         </div>
         <div className="summary-stat stat-draft">
           <div className="summary-stat-label">작성 중</div>
@@ -778,6 +808,14 @@ export default function Dashboard({
           </button>
           <button
             type="button"
+            className="form-btn complete"
+            onClick={() => void handleInterviewComplete()}
+            disabled={saveStatus === 'saving'}
+          >
+            면담 완료
+          </button>
+          <button
+            type="button"
             className="form-btn draft"
             onClick={() => void handleDraftSave()}
             disabled={saveStatus === 'saving'}
@@ -786,19 +824,19 @@ export default function Dashboard({
           </button>
           <button
             type="button"
-            className="form-btn exclude"
-            onClick={() => void handleExcludeSave()}
-            disabled={saveStatus === 'saving'}
-          >
-            대상외
-          </button>
-          <button
-            type="button"
             className="form-btn save"
             onClick={() => void handleFinalSave()}
             disabled={saveStatus === 'saving'}
           >
             저장하기
+          </button>
+          <button
+            type="button"
+            className="form-btn exclude"
+            onClick={() => void handleExcludeSave()}
+            disabled={saveStatus === 'saving'}
+          >
+            대상외
           </button>
         </div>
       </section>
