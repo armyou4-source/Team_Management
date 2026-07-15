@@ -68,6 +68,23 @@ export const normalizeInterviewPurpose = (purpose: string | null | undefined): s
   return DEFAULT_INTERVIEW_PURPOSE;
 };
 
+/** 과거 DB 값 '미입력'을 현재 상태명 '미면담'으로 보정 */
+export const normalizeInterviewStatus = (
+  status: string | null | undefined
+): InterviewStatus => {
+  if (status === '미입력') return '미면담';
+  if (
+    status === '미면담' ||
+    status === '면담완료' ||
+    status === '작성중' ||
+    status === '저장완료' ||
+    status === '대상외'
+  ) {
+    return status;
+  }
+  return '미면담';
+};
+
 export const normalizeComplaintStatus = (
   status: string | null | undefined
 ): ComplaintStatus | '' => {
@@ -130,13 +147,13 @@ export const mapRowToForm = (
 
 export const mapRowToRecord = (row: TeamInterviewRow): InterviewRecord => ({
   form: mapRowToForm(row),
-  status: row.상태,
+  status: normalizeInterviewStatus(row.상태),
 });
 
 export const mapHistoryRowToEntry = (row: TeamInterviewHistoryRow): InterviewHistoryEntry => ({
   id: row.id,
   form: mapRowToForm(row),
-  status: row.상태,
+  status: normalizeInterviewStatus(row.상태),
   savedAt: row.saved_at,
   source: 'history',
 });
