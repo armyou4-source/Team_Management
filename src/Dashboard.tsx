@@ -164,7 +164,7 @@ export default function Dashboard({
   );
 
   const getStatusForEmployee = useCallback(
-    (emp: Employee): InterviewStatus => getRecordForEmployee(emp)?.status ?? '미입력',
+    (emp: Employee): InterviewStatus => getRecordForEmployee(emp)?.status ?? '미면담',
     [getRecordForEmployee]
   );
 
@@ -227,7 +227,7 @@ export default function Dashboard({
 
   const summaryStats = useMemo(() => {
     const counts: Record<InterviewStatus, number> = {
-      미입력: 0,
+      미면담: 0,
       면담완료: 0,
       작성중: 0,
       저장완료: 0,
@@ -409,7 +409,7 @@ export default function Dashboard({
     await upsertInterviewRecord(
       selectedEmp,
       resetForm,
-      '미입력',
+      '미면담',
       '면담 기록이 초기화되었습니다.'
     );
     setForm(resetForm);
@@ -599,8 +599,8 @@ export default function Dashboard({
       </div>
       <div className="summary-stats">
         <div className="summary-stat stat-empty">
-          <div className="summary-stat-label">미입력</div>
-          <div className="summary-stat-value">{summaryStats.미입력}</div>
+          <div className="summary-stat-label">미면담</div>
+          <div className="summary-stat-value">{summaryStats.미면담}</div>
         </div>
         <div className="summary-stat stat-completed">
           <div className="summary-stat-label">면담 완료</div>

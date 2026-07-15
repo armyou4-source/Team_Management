@@ -302,7 +302,9 @@ export default function ShiftAssignmentManagement({
       >
         <h5 className="shift-standing-role-title-row">
           <span className="shift-standing-role-title">{role}</span>
-          <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role as StandingShiftRole]} />
+          {STANDING_SHIFT_WORK_TYPES[role as StandingShiftRole] ? (
+            <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role as StandingShiftRole]!} />
+          ) : null}
         </h5>
         <ul className="shift-member-summary-list standing">
           {memberIds.length === 0 ? (
@@ -368,7 +370,9 @@ export default function ShiftAssignmentManagement({
                   <div key={role} className="shift-standing-role-block skeleton">
                     <h5 className="shift-standing-role-title-row">
                       <span className="shift-standing-role-title">{role}</span>
-                      <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role]} />
+                      {STANDING_SHIFT_WORK_TYPES[role] ? (
+                        <ShiftWorkTypeBadge workType={STANDING_SHIFT_WORK_TYPES[role]!} />
+                      ) : null}
                     </h5>
                   </div>
                 ))
@@ -454,7 +458,9 @@ export default function ShiftAssignmentManagement({
                   >
                     {STANDING_SHIFT_ROLES.map((role) => (
                       <option key={role} value={role}>
-                        {role} ({STANDING_SHIFT_WORK_TYPES[role]})
+                        {STANDING_SHIFT_WORK_TYPES[role]
+                          ? `${role} (${STANDING_SHIFT_WORK_TYPES[role]})`
+                          : role}
                       </option>
                     ))}
                   </select>

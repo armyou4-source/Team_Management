@@ -62,7 +62,7 @@ if (selectError) {
 const probe = {
   사번: '__setup_probe__',
   성명: 'probe',
-  상태: '미입력',
+  상태: '미면담',
   updated_at: new Date().toISOString(),
 };
 
