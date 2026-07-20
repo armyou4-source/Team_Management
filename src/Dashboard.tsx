@@ -4,6 +4,7 @@ import {
   type DashboardEmployee,
   fetchTeamMembers,
   formatEmployeeId,
+  formatTransferTenure,
   groupEmployeesByDepartment,
   sortDepartments,
 } from './teamMemberService';
@@ -732,6 +733,7 @@ export default function Dashboard({
     }
 
     const currentStatus = getStatusForEmployee(selectedEmp);
+    const transferTenure = formatTransferTenure(selectedEmp.transferDate);
 
     return (
       <section className="form-card">
@@ -745,6 +747,7 @@ export default function Dashboard({
             </div>
             <p className="form-card-subtitle">
               {selectedEmp.position} · {selectedEmp.department} · 사번 {selectedEmp.displayId}
+              {transferTenure ? ` · 근속 ${transferTenure}` : ''}
             </p>
           </div>
 
