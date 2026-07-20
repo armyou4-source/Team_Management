@@ -10,6 +10,7 @@ export const WORK_SCHEDULE_USERNAME =
 export const WORK_SCHEDULE_PASSWORD =
   import.meta.env.VITE_WORK_SCHEDULE_PASSWORD?.trim() || 'mbcmbc';
 
+const WORK_SCHEDULE_WINDOW_NAME = 'workScheduleWindow';
 const LOGIN_PATH = '/Home/Login';
 
 const fetchLoginToken = async (): Promise<string | null> => {
@@ -31,11 +32,11 @@ const appendHiddenField = (form: HTMLFormElement, name: string, value: string): 
   form.appendChild(input);
 };
 
-const submitLoginForm = (token: string): void => {
+const submitLoginForm = (target: string, token: string): void => {
   const form = document.createElement('form');
   form.method = 'POST';
   form.action = `${WORK_SCHEDULE_URL}${LOGIN_PATH}`;
-  form.target = '_blank';
+  form.target = target;
   form.style.display = 'none';
 
   appendHiddenField(form, 'Username', WORK_SCHEDULE_USERNAME);
@@ -48,13 +49,19 @@ const submitLoginForm = (token: string): void => {
   document.body.removeChild(form);
 };
 
-export const openWorkSchedule = async (): Promise<void> => {
-  const token = await fetchLoginToken();
-
-  if (token && WORK_SCHEDULE_PASSWORD) {
-    submitLoginForm(token);
+export const openWorkSchedule = (): void => {
+  const popup = window.open(WORK_SCHEDULE_URL, WORK_SCHEDULE_WINDOW_NAME);
+  if (!popup) {
+    alert(
+      '팝업이 차단되어 근무표를 열 수 없습니다.\n브라우저에서 팝업을 허용한 뒤 다시 시도해 주세요.'
+    );
     return;
   }
 
-  window.open(WORK_SCHEDULE_URL, '_blank', 'noopener,noreferrer');
+  void (async () => {
+    const token = await fetchLoginToken();
+    if (token && WORK_SCHEDULE_PASSWORD) {
+      submitLoginForm(WORK_SCHEDULE_WINDOW_NAME, token);
+    }
+  })();
 };

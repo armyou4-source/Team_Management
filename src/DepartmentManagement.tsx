@@ -852,7 +852,7 @@ export default function DepartmentManagement({
               className="dept-tree-item tenure-menu-item schedule-menu-item"
               onClick={openScheduleMenu}
             >
-              <span className="dept-tree-name">근무표</span>
+              <span className="dept-tree-name">근무표_조상익 개발 연결</span>
             </button>
           </div>
 

@@ -5,7 +5,9 @@ import react from '@vitejs/plugin-react'
 const normalizeBaseUrl = (url: string): string => url.replace(/\/+$/, '')
 
 const parseVerificationToken = (html: string): string | null => {
-  const match = html.match(/name="__RequestVerificationToken" type="hidden" value="([^"]+)"/)
+  const match =
+    html.match(/name="__RequestVerificationToken"[^>]*value="([^"]+)"/) ??
+    html.match(/value="([^"]+)"[^>]*name="__RequestVerificationToken"/)
   return match?.[1] ?? null
 }
 
