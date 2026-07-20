@@ -271,6 +271,26 @@ export const archiveInterviewToHistory = async (
   }
 };
 
+export const updateInterviewHistoryEntry = async (
+  id: string,
+  emp: EmployeeRef,
+  form: InterviewForm,
+  status: InterviewStatus
+): Promise<void> => {
+  const payload = buildInterviewPayload(emp, form, status);
+  const { error } = await supabase
+    .from('team_interview_history')
+    .update({
+      ...payload,
+      saved_at: new Date().toISOString(),
+    })
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
+};
+
 export const deleteInterviewHistoryEntry = async (id: string): Promise<void> => {
   const { error } = await supabase.from('team_interview_history').delete().eq('id', id);
 

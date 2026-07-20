@@ -33,6 +33,7 @@ import {
   preserveComplaintFields,
   saveInterviewToSupabase,
   shouldShowComplaintBadge,
+  updateInterviewHistoryEntry,
 } from './interviewService';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
 
@@ -153,6 +154,7 @@ export default function Dashboard({
   const [historyTableReady, setHistoryTableReady] = useState(true);
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [historyDeletingId, setHistoryDeletingId] = useState<string | null>(null);
+  const [loadedHistoryEntryId, setLoadedHistoryEntryId] = useState<string | null>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
 
   const departments = useMemo(
@@ -267,6 +269,7 @@ export default function Dashboard({
 
   const selectEmployee = (emp: Employee) => {
     setSelectedEmpId(emp.id);
+    setLoadedHistoryEntryId(null);
     const record = getRecordForEmployee(emp);
     if (
       record &&
@@ -458,6 +461,7 @@ export default function Dashboard({
       '면담 기록이 초기화되었습니다.'
     );
     setForm(resetForm);
+    setLoadedHistoryEntryId(null);
   };
 
   const handleInterviewComplete = async () => {
@@ -514,6 +518,14 @@ export default function Dashboard({
       return;
     }
 
+    let overwriteLoadedHistory = false;
+    const hadLoadedHistory = loadedHistoryEntryId !== null;
+    if (loadedHistoryEntryId) {
+      overwriteLoadedHistory = window.confirm(
+        '지난 면담 기록을 불러와 수정했습니다.\n\n[확인] 기존 면담에 덮어쓰기\n[취소] 새 면담으로 저장'
+      );
+    }
+
     const savedForm = { ...form };
     const clearedForm = preserveComplaintFields(createFreshInterviewForm(), savedForm);
     setSaveStatus('saving');
@@ -521,8 +533,18 @@ export default function Dashboard({
     try {
       let archived = false;
       try {
-        await archiveInterviewToHistory(selectedEmp, savedForm, '저장완료');
-        archived = true;
+        if (loadedHistoryEntryId && overwriteLoadedHistory) {
+          await updateInterviewHistoryEntry(
+            loadedHistoryEntryId,
+            selectedEmp,
+            savedForm,
+            '저장완료'
+          );
+          archived = true;
+        } else {
+          await archiveInterviewToHistory(selectedEmp, savedForm, '저장완료');
+          archived = true;
+        }
         setHistoryTableReady(true);
       } catch (err: unknown) {
         if (!isMissingHistoryTableError(err as { code?: string; message?: string })) {
@@ -545,10 +567,17 @@ export default function Dashboard({
       }));
       setInterviewTableReady(true);
       setForm(clearedForm);
+      setLoadedHistoryEntryId(null);
       setHistoryExpanded(false);
       setSaveStatus('idle');
       await loadInterviewHistory(selectedEmp);
-      alert('면담 기록이 저장되었습니다.');
+      alert(
+        hadLoadedHistory && overwriteLoadedHistory
+          ? '기존 면담 기록을 덮어썼습니다.'
+          : hadLoadedHistory
+            ? '새 면담 기록으로 저장했습니다.'
+            : '면담 기록이 저장되었습니다.'
+      );
     } catch (err: unknown) {
       console.error('Error saving interview:', err);
       setSaveStatus('error');
@@ -605,6 +634,7 @@ export default function Dashboard({
       ...entry.form,
       purpose: normalizeInterviewPurpose(entry.form.purpose),
     });
+    setLoadedHistoryEntryId(entry.id);
     setHistoryExpanded(false);
   };
 
