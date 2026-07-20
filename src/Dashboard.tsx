@@ -24,9 +24,9 @@ import {
   getEmployeeDbKey,
   hasComplaintsContent,
   hasInterviewContent,
-  getUtf8ByteLength,
+  getCp949ByteLength,
   INTERVIEW_TEXT_MAX_BYTES,
-  truncateToUtf8MaxBytes,
+  truncateToCp949MaxBytes,
   isMissingHistoryTableError,
   isMissingTableError,
   normalizeComplaintStatus,
@@ -318,11 +318,11 @@ export default function Dashboard({
   };
 
   const updateLimitedTextField = (key: 'content' | 'feedback', value: string) => {
-    updateFormField(key, truncateToUtf8MaxBytes(value, INTERVIEW_TEXT_MAX_BYTES));
+    updateFormField(key, truncateToCp949MaxBytes(value, INTERVIEW_TEXT_MAX_BYTES));
   };
 
   const renderByteCounter = (value: string) => {
-    const bytes = getUtf8ByteLength(value);
+    const bytes = getCp949ByteLength(value);
     const isOverLimit = bytes > INTERVIEW_TEXT_MAX_BYTES;
 
     return (

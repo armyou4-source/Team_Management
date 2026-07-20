@@ -1,3 +1,4 @@
+import iconv from 'iconv-lite';
 import { supabase } from './supabaseClient';
 
 export type InterviewStatus = '미면담' | '면담완료' | '작성중' | '저장완료' | '대상외';
@@ -240,17 +241,20 @@ export const hasInterviewContent = (form: InterviewForm): boolean =>
 
 export const INTERVIEW_TEXT_MAX_BYTES = 500;
 
-export const getUtf8ByteLength = (value: string): number =>
-  new TextEncoder().encode(value).length;
+/** 붙여넣기 대상(Windows CP949/EUC-KR)과 동일한 byte 길이 */
+export const getCp949ByteLength = (value: string): number =>
+  iconv.encode(value, 'cp949').length;
 
-export const truncateToUtf8MaxBytes = (value: string, maxBytes: number): string => {
-  if (getUtf8ByteLength(value) <= maxBytes) return value;
+export const truncateToCp949MaxBytes = (value: string, maxBytes: number): string => {
+  if (getCp949ByteLength(value) <= maxBytes) return value;
 
   let result = '';
+  let byteLength = 0;
   for (const char of value) {
-    const next = result + char;
-    if (getUtf8ByteLength(next) > maxBytes) break;
-    result = next;
+    const charBytes = getCp949ByteLength(char);
+    if (byteLength + charBytes > maxBytes) break;
+    result += char;
+    byteLength += charBytes;
   }
   return result;
 };

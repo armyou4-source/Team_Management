@@ -61,6 +61,12 @@ const workScheduleTokenPlugin = (): Plugin => ({
 export default defineConfig({
   plugins: [react(), workScheduleTokenPlugin()],
   appType: 'spa',
+  resolve: {
+    alias: {
+      buffer: 'buffer/',
+      string_decoder: 'string_decoder/',
+    },
+  },
   preview: {
     host: true,
   },
