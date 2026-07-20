@@ -155,7 +155,26 @@ export default function Dashboard({
   const [historyExpanded, setHistoryExpanded] = useState(false);
   const [historyDeletingId, setHistoryDeletingId] = useState<string | null>(null);
   const [loadedHistoryEntryId, setLoadedHistoryEntryId] = useState<string | null>(null);
+  const [historySaveModalOpen, setHistorySaveModalOpen] = useState(false);
   const formPanelRef = useRef<HTMLDivElement>(null);
+  const historySaveChoiceRef = useRef<((choice: 'overwrite' | 'append' | null) => void) | null>(
+    null
+  );
+
+  const promptHistorySaveChoice = useCallback(
+    (): Promise<'overwrite' | 'append' | null> =>
+      new Promise((resolve) => {
+        historySaveChoiceRef.current = resolve;
+        setHistorySaveModalOpen(true);
+      }),
+    []
+  );
+
+  const closeHistorySaveModal = useCallback((choice: 'overwrite' | 'append' | null) => {
+    setHistorySaveModalOpen(false);
+    historySaveChoiceRef.current?.(choice);
+    historySaveChoiceRef.current = null;
+  }, []);
 
   const departments = useMemo(
     () => sortDepartments(employees.map((e) => e.department), currentUser.소속),
@@ -521,9 +540,11 @@ export default function Dashboard({
     let overwriteLoadedHistory = false;
     const hadLoadedHistory = loadedHistoryEntryId !== null;
     if (loadedHistoryEntryId) {
-      overwriteLoadedHistory = window.confirm(
-        '지난 면담 기록을 불러와 수정했습니다.\n\n[확인] 기존 면담에 덮어쓰기\n[취소] 새 면담으로 저장'
-      );
+      const choice = await promptHistorySaveChoice();
+      if (!choice) {
+        return;
+      }
+      overwriteLoadedHistory = choice === 'overwrite';
     }
 
     const savedForm = { ...form };
@@ -725,19 +746,6 @@ export default function Dashboard({
             <p className="form-card-subtitle">
               {selectedEmp.position} · {selectedEmp.department} · 사번 {selectedEmp.displayId}
             </p>
-            <section className="interview-history-panel interview-history-panel-inline">
-              <div className="interview-history-header">
-                <h4 className="interview-history-title">지난 면담 불러오기</h4>
-                <button
-                  type="button"
-                  className="interview-history-toggle"
-                  onClick={() => setHistoryExpanded((prev) => !prev)}
-                  aria-expanded={historyExpanded}
-                >
-                  {historyExpanded ? '접기' : '펼치기'}
-                </button>
-              </div>
-            </section>
           </div>
 
           {!historyTableReady && (
@@ -746,57 +754,6 @@ export default function Dashboard({
               <code>supabase/migrations/006_create_team_interview_history.sql</code>을 실행하면
               지난 면담을 보관·불러올 수 있습니다.
             </p>
-          )}
-
-          {historyExpanded && (
-            <div className="interview-history-body">
-              <p className="interview-history-desc">
-                저장된 지난 면담 기록을 선택하면 아래 작성란에 불러옵니다.
-              </p>
-              {historyLoading && (
-                <p className="interview-history-empty">지난 면담 기록을 불러오는 중...</p>
-              )}
-              {!historyLoading && historyError && (
-                <p className="interview-history-empty error">{historyError}</p>
-              )}
-              {!historyLoading && !historyError && interviewHistory.length === 0 && (
-                <p className="interview-history-empty">불러올 지난 면담 기록이 없습니다.</p>
-              )}
-              {!historyLoading && !historyError && interviewHistory.length > 0 && (
-                <ul className="interview-history-list">
-                  {interviewHistory.map((entry) => (
-                    <li key={entry.id} className="interview-history-list-item">
-                      <button
-                        type="button"
-                        className="interview-history-item"
-                        onClick={() => handleLoadHistoryEntry(entry)}
-                        disabled={historyDeletingId === entry.id}
-                      >
-                        <div className="interview-history-item-top">
-                          <span className="interview-history-purpose">{entry.form.purpose}</span>
-                          <span className="interview-history-date">
-                            {entry.form.date || '일자 미입력'}
-                          </span>
-                        </div>
-                        <p className="interview-history-preview">{getHistoryPreview(entry.form)}</p>
-                        <span className="interview-history-meta">
-                          저장 {formatHistoryDate(entry.savedAt)}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="interview-history-delete-btn"
-                        onClick={() => void handleDeleteHistoryEntry(entry)}
-                        disabled={historyDeletingId === entry.id}
-                        aria-label={`${entry.form.purpose} 면담 기록 삭제`}
-                      >
-                        {historyDeletingId === entry.id ? '삭제 중' : '삭제'}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           )}
         </div>
 
@@ -918,7 +875,67 @@ export default function Dashboard({
           >
             대상외
           </button>
+          <button
+            type="button"
+            className="form-btn history"
+            onClick={() => setHistoryExpanded((prev) => !prev)}
+            aria-expanded={historyExpanded}
+            disabled={saveStatus === 'saving'}
+          >
+            {historyExpanded ? '지난 면담 접기' : '지난 면담 불러오기'}
+          </button>
         </div>
+
+        {historyExpanded && (
+          <section className="interview-history-panel interview-history-panel-actions">
+            <p className="interview-history-desc">
+              저장된 지난 면담 기록을 선택하면 위 작성란에 불러옵니다.
+            </p>
+            {historyLoading && (
+              <p className="interview-history-empty">지난 면담 기록을 불러오는 중...</p>
+            )}
+            {!historyLoading && historyError && (
+              <p className="interview-history-empty error">{historyError}</p>
+            )}
+            {!historyLoading && !historyError && interviewHistory.length === 0 && (
+              <p className="interview-history-empty">불러올 지난 면담 기록이 없습니다.</p>
+            )}
+            {!historyLoading && !historyError && interviewHistory.length > 0 && (
+              <ul className="interview-history-list">
+                {interviewHistory.map((entry) => (
+                  <li key={entry.id} className="interview-history-list-item">
+                    <button
+                      type="button"
+                      className="interview-history-item"
+                      onClick={() => handleLoadHistoryEntry(entry)}
+                      disabled={historyDeletingId === entry.id}
+                    >
+                      <div className="interview-history-item-top">
+                        <span className="interview-history-purpose">{entry.form.purpose}</span>
+                        <span className="interview-history-date">
+                          {entry.form.date || '일자 미입력'}
+                        </span>
+                      </div>
+                      <p className="interview-history-preview">{getHistoryPreview(entry.form)}</p>
+                      <span className="interview-history-meta">
+                        저장 {formatHistoryDate(entry.savedAt)}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="interview-history-delete-btn"
+                      onClick={() => void handleDeleteHistoryEntry(entry)}
+                      disabled={historyDeletingId === entry.id}
+                      aria-label={`${entry.form.purpose} 면담 기록 삭제`}
+                    >
+                      {historyDeletingId === entry.id ? '삭제 중' : '삭제'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
       </section>
     );
   };
@@ -1057,6 +1074,44 @@ export default function Dashboard({
           {renderInterviewForm()}
         </div>
       </main>
+
+      {historySaveModalOpen && (
+        <div
+          className="interview-save-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="interview-save-modal-title"
+          onClick={() => closeHistorySaveModal(null)}
+        >
+          <div className="interview-save-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 id="interview-save-modal-title" className="interview-save-modal-title">
+              지난 면담 기록 저장
+            </h2>
+            <p className="interview-save-modal-message">
+              지난 면담 기록을 불러와 수정했습니다.
+            </p>
+            <div className="interview-save-modal-actions">
+              <button
+                type="button"
+                className="form-btn save"
+                onClick={() => closeHistorySaveModal('overwrite')}
+              >
+                확인
+              </button>
+              <button
+                type="button"
+                className="form-btn history"
+                onClick={() => closeHistorySaveModal('append')}
+              >
+                추가
+              </button>
+            </div>
+            <p className="interview-save-modal-hint">
+              확인: 기존 면담에 덮어쓰기 · 추가: 새 면담으로 저장
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
