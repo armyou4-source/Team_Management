@@ -377,7 +377,7 @@ export default function DepartmentManagement({
   };
 
   const openScheduleMenu = () => {
-    void openWorkSchedule();
+    openWorkSchedule();
   };
 
   const toggleAccidentMenu = () => {
