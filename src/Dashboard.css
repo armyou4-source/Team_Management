@@ -771,11 +771,10 @@
 }
 
 .form-byte-counter {
-  margin: 6px 0 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--text-tertiary);
-  text-align: right;
+  white-space: nowrap;
 }
 
 .form-byte-counter.over-limit {

@@ -303,14 +303,38 @@ export default function Dashboard({
     const isOverLimit = bytes > INTERVIEW_TEXT_MAX_BYTES;
 
     return (
-      <p
+      <span
         className={`form-byte-counter${isOverLimit ? ' over-limit' : ''}`}
         aria-live="polite"
       >
         {bytes} / {INTERVIEW_TEXT_MAX_BYTES} byte
-      </p>
+      </span>
     );
   };
+
+  const renderLimitedFormFieldHeader = (
+    label: string,
+    fieldKey: string,
+    value: string,
+    htmlFor: string
+  ) => (
+    <div className="form-label-row">
+      <div className="form-label-group">
+        <label className="form-label" htmlFor={htmlFor}>
+          {label}
+        </label>
+        {renderByteCounter(value)}
+      </div>
+      <button
+        type="button"
+        className={`form-copy-btn${copiedField === fieldKey ? ' copied' : ''}`}
+        onClick={() => void copyFieldValue(fieldKey, value)}
+        disabled={!value.trim()}
+      >
+        {copiedField === fieldKey ? '복사됨' : '복사'}
+      </button>
+    </div>
+  );
 
   const copyFieldValue = async (fieldKey: string, value: string) => {
     const text = value.trim();
@@ -773,7 +797,12 @@ export default function Dashboard({
             </select>
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader('피드백 내용', 'content', form.content, 'interview-content')}
+            {renderLimitedFormFieldHeader(
+              '피드백 내용',
+              'content',
+              form.content,
+              'interview-content'
+            )}
             <textarea
               id="interview-content"
               className="form-textarea"
@@ -781,10 +810,9 @@ export default function Dashboard({
               onChange={(e) => updateLimitedTextField('content', e.target.value)}
               placeholder="피드백 내용을 입력하세요"
             />
-            {renderByteCounter(form.content)}
           </div>
           <div className="form-field full">
-            {renderFormFieldHeader(
+            {renderLimitedFormFieldHeader(
               '피평가자에 대한 개선 요청 사항',
               'feedback',
               form.feedback,
@@ -797,7 +825,6 @@ export default function Dashboard({
               onChange={(e) => updateLimitedTextField('feedback', e.target.value)}
               placeholder="피평가자에 대한 개선 요청 사항"
             />
-            {renderByteCounter(form.feedback)}
           </div>
           <div className="form-field full">
             {renderComplaintsFieldHeader()}
