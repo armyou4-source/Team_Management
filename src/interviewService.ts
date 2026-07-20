@@ -238,6 +238,23 @@ export const fetchInterviewHistoryForEmployee = async (
 export const hasInterviewContent = (form: InterviewForm): boolean =>
   Boolean(form.content.trim() || form.feedback.trim() || form.complaints.trim());
 
+export const INTERVIEW_TEXT_MAX_BYTES = 500;
+
+export const getUtf8ByteLength = (value: string): number =>
+  new TextEncoder().encode(value).length;
+
+export const truncateToUtf8MaxBytes = (value: string, maxBytes: number): string => {
+  if (getUtf8ByteLength(value) <= maxBytes) return value;
+
+  let result = '';
+  for (const char of value) {
+    const next = result + char;
+    if (getUtf8ByteLength(next) > maxBytes) break;
+    result = next;
+  }
+  return result;
+};
+
 export const archiveInterviewToHistory = async (
   emp: EmployeeRef,
   form: InterviewForm,

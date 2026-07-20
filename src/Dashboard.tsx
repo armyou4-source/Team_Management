@@ -23,6 +23,9 @@ import {
   getEmployeeDbKey,
   hasComplaintsContent,
   hasInterviewContent,
+  getUtf8ByteLength,
+  INTERVIEW_TEXT_MAX_BYTES,
+  truncateToUtf8MaxBytes,
   isMissingHistoryTableError,
   isMissingTableError,
   normalizeComplaintStatus,
@@ -289,6 +292,24 @@ export default function Dashboard({
 
   const updateFormField = <K extends keyof InterviewForm>(key: K, value: InterviewForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateLimitedTextField = (key: 'content' | 'feedback', value: string) => {
+    updateFormField(key, truncateToUtf8MaxBytes(value, INTERVIEW_TEXT_MAX_BYTES));
+  };
+
+  const renderByteCounter = (value: string) => {
+    const bytes = getUtf8ByteLength(value);
+    const isOverLimit = bytes > INTERVIEW_TEXT_MAX_BYTES;
+
+    return (
+      <p
+        className={`form-byte-counter${isOverLimit ? ' over-limit' : ''}`}
+        aria-live="polite"
+      >
+        {bytes} / {INTERVIEW_TEXT_MAX_BYTES} byte
+      </p>
+    );
   };
 
   const copyFieldValue = async (fieldKey: string, value: string) => {
@@ -757,9 +778,10 @@ export default function Dashboard({
               id="interview-content"
               className="form-textarea"
               value={form.content}
-              onChange={(e) => updateFormField('content', e.target.value)}
+              onChange={(e) => updateLimitedTextField('content', e.target.value)}
               placeholder="피드백 내용을 입력하세요"
             />
+            {renderByteCounter(form.content)}
           </div>
           <div className="form-field full">
             {renderFormFieldHeader(
@@ -772,9 +794,10 @@ export default function Dashboard({
               id="interview-feedback"
               className="form-textarea"
               value={form.feedback}
-              onChange={(e) => updateFormField('feedback', e.target.value)}
+              onChange={(e) => updateLimitedTextField('feedback', e.target.value)}
               placeholder="피평가자에 대한 개선 요청 사항"
             />
+            {renderByteCounter(form.feedback)}
           </div>
           <div className="form-field full">
             {renderComplaintsFieldHeader()}

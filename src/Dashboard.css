@@ -770,6 +770,18 @@
   line-height: 1.6;
 }
 
+.form-byte-counter {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+
+.form-byte-counter.over-limit {
+  color: #dc2626;
+}
+
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
