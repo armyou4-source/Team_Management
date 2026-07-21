@@ -25,7 +25,10 @@ import {
   hasComplaintsContent,
   hasInterviewContent,
   getCp949ByteLength,
+  INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN,
   INTERVIEW_TEXT_MAX_BYTES,
+  sanitizeInterviewLimitedFields,
+  sanitizeInterviewTextInput,
   truncateToCp949MaxBytes,
   isMissingHistoryTableError,
   isMissingTableError,
@@ -157,10 +160,12 @@ export default function Dashboard({
   const [historyDeletingId, setHistoryDeletingId] = useState<string | null>(null);
   const [loadedHistoryEntryId, setLoadedHistoryEntryId] = useState<string | null>(null);
   const [historySaveModalOpen, setHistorySaveModalOpen] = useState(false);
+  const [specialCharNotice, setSpecialCharNotice] = useState<string | null>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
   const historySaveChoiceRef = useRef<((choice: 'overwrite' | 'append' | null) => void) | null>(
     null
   );
+  const specialCharNoticeTimerRef = useRef<number | null>(null);
 
   const promptHistorySaveChoice = useCallback(
     (): Promise<'overwrite' | 'append' | null> =>
@@ -176,6 +181,26 @@ export default function Dashboard({
     historySaveChoiceRef.current?.(choice);
     historySaveChoiceRef.current = null;
   }, []);
+
+  const showSpecialCharNotice = useCallback(() => {
+    setSpecialCharNotice('특수문자는 입력할 수 없습니다.');
+    if (specialCharNoticeTimerRef.current !== null) {
+      window.clearTimeout(specialCharNoticeTimerRef.current);
+    }
+    specialCharNoticeTimerRef.current = window.setTimeout(() => {
+      setSpecialCharNotice(null);
+      specialCharNoticeTimerRef.current = null;
+    }, 2500);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (specialCharNoticeTimerRef.current !== null) {
+        window.clearTimeout(specialCharNoticeTimerRef.current);
+      }
+    },
+    []
+  );
 
   const departments = useMemo(
     () => sortDepartments(employees.map((e) => e.department), currentUser.소속),
@@ -296,13 +321,19 @@ export default function Dashboard({
       (record.status === '작성중' || record.status === '면담완료') &&
       (record.status === '면담완료' || hasFormContent(record.form))
     ) {
-      setForm({
-        ...record.form,
-        purpose: normalizeInterviewPurpose(record.form.purpose),
-      });
+      setForm(
+        sanitizeInterviewLimitedFields({
+          ...record.form,
+          purpose: normalizeInterviewPurpose(record.form.purpose),
+        })
+      );
     } else {
       const freshForm = createFreshInterviewForm();
-      setForm(record?.form ? preserveComplaintFields(freshForm, record.form) : freshForm);
+      setForm(
+        record?.form
+          ? sanitizeInterviewLimitedFields(preserveComplaintFields(freshForm, record.form))
+          : freshForm
+      );
     }
     setHistoryExpanded(false);
     void loadInterviewHistory(emp);
@@ -318,7 +349,20 @@ export default function Dashboard({
   };
 
   const updateLimitedTextField = (key: 'content' | 'feedback', value: string) => {
-    updateFormField(key, truncateToCp949MaxBytes(value, INTERVIEW_TEXT_MAX_BYTES));
+    const { sanitized, hadBlockedChars } = sanitizeInterviewTextInput(value);
+    if (hadBlockedChars) {
+      showSpecialCharNotice();
+    }
+    updateFormField(key, truncateToCp949MaxBytes(sanitized, INTERVIEW_TEXT_MAX_BYTES));
+  };
+
+  const handleLimitedTextKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key.length !== 1) return;
+    if (INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN.test(event.key)) {
+      event.preventDefault();
+      showSpecialCharNotice();
+    }
   };
 
   const renderByteCounter = (value: string) => {
@@ -652,10 +696,12 @@ export default function Dashboard({
       if (!confirmed) return;
     }
 
-    setForm({
-      ...entry.form,
-      purpose: normalizeInterviewPurpose(entry.form.purpose),
-    });
+    setForm(
+      sanitizeInterviewLimitedFields({
+        ...entry.form,
+        purpose: normalizeInterviewPurpose(entry.form.purpose),
+      })
+    );
     setLoadedHistoryEntryId(entry.id);
     setHistoryExpanded(false);
   };
@@ -798,6 +844,7 @@ export default function Dashboard({
               className="form-textarea"
               value={form.content}
               onChange={(e) => updateLimitedTextField('content', e.target.value)}
+              onKeyDown={handleLimitedTextKeyDown}
               placeholder="피드백 내용을 입력하세요"
             />
           </div>
@@ -813,6 +860,7 @@ export default function Dashboard({
               className="form-textarea"
               value={form.feedback}
               onChange={(e) => updateLimitedTextField('feedback', e.target.value)}
+              onKeyDown={handleLimitedTextKeyDown}
               placeholder="피평가자에 대한 개선 요청 사항"
             />
           </div>
@@ -1113,6 +1161,12 @@ export default function Dashboard({
               확인: 기존 면담에 덮어쓰기 · 추가: 새 면담으로 저장
             </p>
           </div>
+        </div>
+      )}
+
+      {specialCharNotice && (
+        <div className="interview-special-char-toast" role="status" aria-live="polite">
+          {specialCharNotice}
         </div>
       )}
     </div>

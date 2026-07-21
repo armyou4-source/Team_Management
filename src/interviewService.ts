@@ -241,6 +241,23 @@ export const hasInterviewContent = (form: InterviewForm): boolean =>
 
 export const INTERVIEW_TEXT_MAX_BYTES = 500;
 
+export const INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN = /[!@#$%^&{}\\?/]/;
+export const INTERVIEW_BLOCKED_SPECIAL_CHAR_REGEX = /[!@#$%^&{}\\?/]/g;
+
+export const sanitizeInterviewTextInput = (
+  value: string
+): { sanitized: string; hadBlockedChars: boolean } => {
+  const hadBlockedChars = INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN.test(value);
+  const sanitized = value.replace(INTERVIEW_BLOCKED_SPECIAL_CHAR_REGEX, '');
+  return { sanitized, hadBlockedChars };
+};
+
+export const sanitizeInterviewLimitedFields = (form: InterviewForm): InterviewForm => ({
+  ...form,
+  content: sanitizeInterviewTextInput(form.content).sanitized,
+  feedback: sanitizeInterviewTextInput(form.feedback).sanitized,
+});
+
 /** 붙여넣기 대상(Windows CP949/EUC-KR)과 동일한 byte 길이 */
 export const getCp949ByteLength = (value: string): number =>
   iconv.encode(value, 'cp949').length;
