@@ -289,6 +289,8 @@ export default function Dashboard({
     return counts;
   }, [employees, getStatusForEmployee]);
 
+  const interviewTargetCount = employees.length - summaryStats.대상외;
+
   const loadInterviewHistory = useCallback(async (emp: Employee) => {
     setHistoryLoading(true);
     setHistoryError(null);
@@ -738,7 +740,9 @@ export default function Dashboard({
             )}
           </div>
         </div>
-        <span className="summary-total">전체 {employees.length}명</span>
+        <span className="summary-total">
+          면담 대상 {interviewTargetCount}명 / 전체 {employees.length}명
+        </span>
       </div>
       <div className="summary-stats">
         <div className="summary-stat stat-empty">
