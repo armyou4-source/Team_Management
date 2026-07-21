@@ -241,8 +241,8 @@ export const hasInterviewContent = (form: InterviewForm): boolean =>
 
 export const INTERVIEW_TEXT_MAX_BYTES = 500;
 
-export const INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN = /[!@#$%^&{}\\?/]/;
-export const INTERVIEW_BLOCKED_SPECIAL_CHAR_REGEX = /[!@#$%^&{}\\?/]/g;
+export const INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN = /[!@#$%^&{}\\?/+]/;
+export const INTERVIEW_BLOCKED_SPECIAL_CHAR_REGEX = /[!@#$%^&{}\\?/+]/g;
 
 export const sanitizeInterviewTextInput = (
   value: string
