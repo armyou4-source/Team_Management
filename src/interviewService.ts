@@ -312,6 +312,49 @@ export const updateInterviewHistoryEntry = async (
   }
 };
 
+export const syncComplaintStatusToHistory = async (
+  emp: EmployeeRef,
+  complaints: string,
+  complaintStatus: ComplaintStatus | ''
+): Promise<number> => {
+  const trimmedComplaints = complaints.trim();
+  if (!trimmedComplaints) {
+    return 0;
+  }
+
+  const normalizedStatus = normalizeComplaintStatus(complaintStatus) || DEFAULT_COMPLAINT_STATUS;
+  const employeeKey = getEmployeeDbKey(emp);
+
+  const { data, error: fetchError } = await supabase
+    .from('team_interview_history')
+    .select('*')
+    .eq('사번', employeeKey);
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  const matchingIds =
+    (data as TeamInterviewHistoryRow[] | null)
+      ?.filter((row) => (row.제안민원 ?? '').trim() === trimmedComplaints)
+      .map((row) => row.id) ?? [];
+
+  if (matchingIds.length === 0) {
+    return 0;
+  }
+
+  const { error } = await supabase
+    .from('team_interview_history')
+    .update({ 건의상태: normalizedStatus })
+    .in('id', matchingIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return matchingIds.length;
+};
+
 export const deleteInterviewHistoryEntry = async (id: string): Promise<void> => {
   const { error } = await supabase.from('team_interview_history').delete().eq('id', id);
 

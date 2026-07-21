@@ -37,6 +37,7 @@ import {
   preserveComplaintFields,
   saveInterviewToSupabase,
   shouldShowComplaintBadge,
+  syncComplaintStatusToHistory,
   updateInterviewHistoryEntry,
 } from './interviewService';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
@@ -479,6 +480,21 @@ export default function Dashboard({
     const nextForm = { ...form, complaintStatus: status };
     setForm(nextForm);
     await upsertInterviewRecord(selectedEmp, nextForm, getStatusForEmployee(selectedEmp));
+
+    try {
+      await syncComplaintStatusToHistory(selectedEmp, nextForm.complaints, status);
+      setHistoryTableReady(true);
+      await loadInterviewHistory(selectedEmp);
+    } catch (err: unknown) {
+      if (!isMissingHistoryTableError(err as { code?: string; message?: string })) {
+        console.error('Error syncing complaint status to history:', err);
+        const message =
+          err instanceof Error ? err.message : '지난 면담 기록에 건의 상태를 저장하지 못했습니다.';
+        alert(message);
+      } else {
+        setHistoryTableReady(false);
+      }
+    }
   };
 
   const upsertInterviewRecord = async (
