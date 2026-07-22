@@ -897,38 +897,38 @@ export default function Dashboard({
             <span className="summary-total">
               면담 대상 {interviewTargetCount}명 / 전체 {employees.length}명
             </span>
-          </div>
-          <div className="summary-controls">
-            <label className="summary-period-label" htmlFor="interview-period-select">
-              면담 시기
-            </label>
-            <select
-              id="interview-period-select"
-              className="summary-period-select"
-              value={viewPeriodKey}
-              onChange={(e) => void handleViewPeriodChange(e.target.value)}
-              disabled={dataLoading || periodActionLoading || interviewPeriods.length === 0}
-            >
-              {interviewPeriods.map((period) => (
-                <option key={period.periodKey} value={period.periodKey}>
-                  {period.label}
-                  {period.isActive ? ' (진행 중)' : ''}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="form-btn period-start"
-              onClick={handleStartNewPeriod}
-              disabled={
-                dataLoading ||
-                periodActionLoading ||
-                saveStatus === 'saving' ||
-                !periodTableReady
-              }
-            >
-              다음 면담 시기 시작
-            </button>
+            <div className="summary-controls">
+              <label className="summary-period-label" htmlFor="interview-period-select">
+                면담 시기
+              </label>
+              <select
+                id="interview-period-select"
+                className="summary-period-select"
+                value={viewPeriodKey}
+                onChange={(e) => void handleViewPeriodChange(e.target.value)}
+                disabled={dataLoading || periodActionLoading || interviewPeriods.length === 0}
+              >
+                {interviewPeriods.map((period) => (
+                  <option key={period.periodKey} value={period.periodKey}>
+                    {period.label}
+                    {period.isActive ? ' (진행 중)' : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="form-btn period-start"
+                onClick={handleStartNewPeriod}
+                disabled={
+                  dataLoading ||
+                  periodActionLoading ||
+                  saveStatus === 'saving' ||
+                  !periodTableReady
+                }
+              >
+                다음 면담 시기 시작
+              </button>
+            </div>
           </div>
           <div className="summary-badges">
             {!periodTableReady && (
