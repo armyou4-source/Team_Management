@@ -746,7 +746,12 @@ export default function Dashboard({
     <section className="interview-summary-bar">
       <div className="summary-header">
         <div>
-          <h2 className="summary-title">면담 기록 현황</h2>
+          <div className="summary-title-row">
+            <h2 className="summary-title">면담 기록 현황</h2>
+            <span className="summary-total">
+              면담 대상 {interviewTargetCount}명 / 전체 {employees.length}명
+            </span>
+          </div>
           <div className="summary-badges">
             {!interviewTableReady && (
               <span className="db-badge error">⚠️ team_interview 테이블 필요</span>
@@ -756,9 +761,6 @@ export default function Dashboard({
             )}
           </div>
         </div>
-        <span className="summary-total">
-          면담 대상 {interviewTargetCount}명 / 전체 {employees.length}명
-        </span>
       </div>
       <div className="summary-stats">
         <div className="summary-stat stat-empty">

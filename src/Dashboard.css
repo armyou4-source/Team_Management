@@ -404,11 +404,14 @@
 }
 
 .summary-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 10px;
+}
+
+.summary-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .summary-title {
@@ -420,9 +423,9 @@
 }
 
 .summary-total {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
