@@ -18,25 +18,33 @@ import {
   COMPLAINT_STATUS_OPTIONS,
   archiveInterviewToHistory,
   createFreshInterviewForm,
+  createEmptyPeriodInterviewForm,
   deleteInterviewHistoryEntry,
+  ensureActiveInterviewPeriod,
   fetchInterviewHistoryForEmployee,
-  fetchInterviewsFromSupabase,
+  fetchInterviewPeriods,
+  fetchInterviewsForPeriod,
   getEmployeeDbKey,
   hasComplaintsContent,
   hasInterviewContent,
   getCp949ByteLength,
   INTERVIEW_BLOCKED_SPECIAL_CHAR_PATTERN,
+  INTERVIEW_PERIOD_TYPES,
+  type InterviewPeriodMeta,
+  type InterviewPeriodType,
   INTERVIEW_TEXT_MAX_BYTES,
   sanitizeInterviewLimitedFields,
   sanitizeInterviewTextInput,
   truncateToCp949MaxBytes,
   isMissingHistoryTableError,
+  isMissingPeriodTableError,
   isMissingTableError,
   normalizeComplaintStatus,
   normalizeInterviewPurpose,
   preserveComplaintFields,
   saveInterviewToSupabase,
   shouldShowComplaintBadge,
+  startNewInterviewPeriod,
   syncComplaintStatusToHistory,
   updateInterviewHistoryEntry,
 } from './interviewService';
@@ -162,6 +170,14 @@ export default function Dashboard({
   const [loadedHistoryEntryId, setLoadedHistoryEntryId] = useState<string | null>(null);
   const [historySaveModalOpen, setHistorySaveModalOpen] = useState(false);
   const [specialCharNotice, setSpecialCharNotice] = useState<string | null>(null);
+  const [interviewPeriods, setInterviewPeriods] = useState<InterviewPeriodMeta[]>([]);
+  const [activePeriodKey, setActivePeriodKey] = useState('');
+  const [viewPeriodKey, setViewPeriodKey] = useState('');
+  const [periodTableReady, setPeriodTableReady] = useState(true);
+  const [newPeriodModalOpen, setNewPeriodModalOpen] = useState(false);
+  const [newPeriodYear, setNewPeriodYear] = useState(() => new Date().getFullYear());
+  const [newPeriodType, setNewPeriodType] = useState<InterviewPeriodType>('중간면담');
+  const [periodActionLoading, setPeriodActionLoading] = useState(false);
   const formPanelRef = useRef<HTMLDivElement>(null);
   const historySaveChoiceRef = useRef<((choice: 'overwrite' | 'append' | null) => void) | null>(
     null
@@ -219,6 +235,25 @@ export default function Dashboard({
     [getRecordForEmployee]
   );
 
+  const isArchivedView = Boolean(activePeriodKey && viewPeriodKey && viewPeriodKey !== activePeriodKey);
+  const selectedViewPeriod =
+    interviewPeriods.find((period) => period.periodKey === viewPeriodKey) ?? null;
+
+  const loadRecordsForPeriod = useCallback(async (periodKey: string) => {
+    try {
+      const records = await fetchInterviewsForPeriod(periodKey);
+      setInterviewRecords(records);
+      setInterviewTableReady(true);
+    } catch (err: unknown) {
+      if (isMissingTableError(err as { code?: string; message?: string })) {
+        setInterviewRecords({});
+        setInterviewTableReady(false);
+      } else {
+        throw err;
+      }
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     setDataLoading(true);
     setDataError(null);
@@ -228,11 +263,36 @@ export default function Dashboard({
       setEmployees(members);
 
       try {
-        const records = await fetchInterviewsFromSupabase();
-        setInterviewRecords(records);
-        setInterviewTableReady(true);
+        let periods = await fetchInterviewPeriods();
+        setPeriodTableReady(true);
+
+        let activePeriod = periods.find((period) => period.isActive);
+        if (!activePeriod) {
+          activePeriod = await ensureActiveInterviewPeriod();
+          periods = await fetchInterviewPeriods();
+        }
+
+        setInterviewPeriods(periods);
+        setActivePeriodKey(activePeriod.periodKey);
+        setViewPeriodKey(activePeriod.periodKey);
+        await loadRecordsForPeriod(activePeriod.periodKey);
       } catch (err: unknown) {
-        if (isMissingTableError(err as { code?: string; message?: string })) {
+        if (isMissingPeriodTableError(err as { code?: string; message?: string })) {
+          setPeriodTableReady(false);
+          setInterviewPeriods([]);
+          setActivePeriodKey('');
+          setViewPeriodKey('');
+          try {
+            await loadRecordsForPeriod('legacy');
+          } catch (innerErr: unknown) {
+            if (isMissingTableError(innerErr as { code?: string; message?: string })) {
+              setInterviewRecords({});
+              setInterviewTableReady(false);
+            } else {
+              throw innerErr;
+            }
+          }
+        } else if (isMissingTableError(err as { code?: string; message?: string })) {
           setInterviewRecords({});
           setInterviewTableReady(false);
         } else {
@@ -245,7 +305,7 @@ export default function Dashboard({
     } finally {
       setDataLoading(false);
     }
-  }, []);
+  }, [loadRecordsForPeriod]);
 
   useEffect(() => {
     void loadData();
@@ -292,12 +352,12 @@ export default function Dashboard({
 
   const interviewTargetCount = employees.length - summaryStats.대상외;
 
-  const loadInterviewHistory = useCallback(async (emp: Employee) => {
+  const loadInterviewHistory = useCallback(async (emp: Employee, periodKey = viewPeriodKey) => {
     setHistoryLoading(true);
     setHistoryError(null);
 
     try {
-      const entries = await fetchInterviewHistoryForEmployee(emp);
+      const entries = await fetchInterviewHistoryForEmployee(emp, periodKey || undefined);
       setInterviewHistory(entries);
       setHistoryTableReady(true);
     } catch (err: unknown) {
@@ -313,13 +373,75 @@ export default function Dashboard({
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
+  }, [viewPeriodKey]);
+
+  const handleViewPeriodChange = async (periodKey: string) => {
+    setViewPeriodKey(periodKey);
+    setSelectedEmpId(null);
+    setForm(DEFAULT_FORM);
+    setLoadedHistoryEntryId(null);
+    setHistoryExpanded(false);
+    await loadRecordsForPeriod(periodKey);
+  };
+
+  const handleStartNewPeriod = () => {
+    if (!periodTableReady) {
+      alert(
+        '면담 시기 테이블이 없습니다.\n\nSupabase Dashboard → SQL Editor에서\nsupabase/migrations/019_interview_period.sql 을 실행해 주세요.'
+      );
+      return;
+    }
+    setNewPeriodYear(new Date().getFullYear());
+    setNewPeriodType('중간면담');
+    setNewPeriodModalOpen(true);
+  };
+
+  const confirmStartNewPeriod = async () => {
+    setPeriodActionLoading(true);
+    try {
+      const newPeriod = await startNewInterviewPeriod(employees, newPeriodYear, newPeriodType);
+      const periods = await fetchInterviewPeriods();
+      setInterviewPeriods(periods);
+      setActivePeriodKey(newPeriod.periodKey);
+      setViewPeriodKey(newPeriod.periodKey);
+      setSelectedEmpId(null);
+      setForm(createEmptyPeriodInterviewForm());
+      setLoadedHistoryEntryId(null);
+      setHistoryExpanded(false);
+      await loadRecordsForPeriod(newPeriod.periodKey);
+      setNewPeriodModalOpen(false);
+      alert(`${newPeriod.label} 시기가 시작되었습니다.`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : '새 면담 시기를 시작하지 못했습니다.';
+      alert(message);
+    } finally {
+      setPeriodActionLoading(false);
+    }
+  };
 
   const selectEmployee = (emp: Employee) => {
     setSelectedEmpId(emp.id);
     setLoadedHistoryEntryId(null);
     const record = getRecordForEmployee(emp);
-    if (
+    const viewingArchived = Boolean(
+      activePeriodKey && viewPeriodKey && viewPeriodKey !== activePeriodKey
+    );
+
+    if (viewingArchived) {
+      if (record) {
+        setForm(
+          sanitizeInterviewLimitedFields({
+            ...record.form,
+            purpose: record.form.purpose
+              ? normalizeInterviewPurpose(record.form.purpose)
+              : '',
+          })
+        );
+      } else {
+        setForm(createEmptyPeriodInterviewForm());
+      }
+    } else if (
       record &&
       (record.status === '작성중' || record.status === '면담완료') &&
       (record.status === '면담완료' || hasFormContent(record.form))
@@ -437,7 +559,7 @@ export default function Dashboard({
 
   const renderComplaintsFieldHeader = () => {
     const activeStatus = getActiveComplaintStatus(form.complaintStatus);
-    const canSetStatus = hasComplaintsContent(form);
+    const canSetStatus = hasComplaintsContent(form) && !isArchivedView;
 
     return (
       <div className="form-label-row">
@@ -452,7 +574,7 @@ export default function Dashboard({
                 type="button"
                 className={`complaint-status-btn status-${getComplaintStatusClass(status)}${activeStatus === status ? ' active' : ''}`}
                 onClick={() => void handleComplaintStatusChange(status)}
-                disabled={!canSetStatus || saveStatus === 'saving'}
+                disabled={!canSetStatus || saveStatus === 'saving' || periodActionLoading}
                 aria-pressed={activeStatus === status}
               >
                 {status}
@@ -473,7 +595,7 @@ export default function Dashboard({
   };
 
   const handleComplaintStatusChange = async (status: ComplaintStatus) => {
-    if (!selectedEmp || !hasComplaintsContent(form)) {
+    if (!selectedEmp || !hasComplaintsContent(form) || isArchivedView || !viewPeriodKey) {
       return;
     }
 
@@ -482,7 +604,12 @@ export default function Dashboard({
     await upsertInterviewRecord(selectedEmp, nextForm, getStatusForEmployee(selectedEmp));
 
     try {
-      await syncComplaintStatusToHistory(selectedEmp, nextForm.complaints, status);
+      await syncComplaintStatusToHistory(
+        selectedEmp,
+        nextForm.complaints,
+        status,
+        viewPeriodKey
+      );
       setHistoryTableReady(true);
       await loadInterviewHistory(selectedEmp);
     } catch (err: unknown) {
@@ -503,10 +630,19 @@ export default function Dashboard({
     status: InterviewStatus,
     successMessage?: string
   ) => {
+    if (isArchivedView) {
+      alert('과거 면담 시기는 열람만 가능합니다.');
+      return;
+    }
+    if (!viewPeriodKey) {
+      alert('면담 시기 정보를 불러오지 못했습니다.');
+      return;
+    }
+
     setSaveStatus('saving');
 
     try {
-      await saveInterviewToSupabase(emp, nextForm, status);
+      await saveInterviewToSupabase(emp, nextForm, status, viewPeriodKey);
       setInterviewRecords((prev) => ({
         ...prev,
         [getEmployeeDbKey(emp)]: { form: { ...nextForm }, status },
@@ -595,6 +731,14 @@ export default function Dashboard({
       alert('면담 대상 사원을 선택해주세요.');
       return;
     }
+    if (isArchivedView) {
+      alert('과거 면담 시기는 열람만 가능합니다.');
+      return;
+    }
+    if (!viewPeriodKey) {
+      alert('면담 시기 정보를 불러오지 못했습니다.');
+      return;
+    }
     if (!hasFormContent(form)) {
       alert('피드백 내용을 입력해 주세요.');
       return;
@@ -622,11 +766,12 @@ export default function Dashboard({
             loadedHistoryEntryId,
             selectedEmp,
             savedForm,
-            '저장완료'
+            '저장완료',
+            viewPeriodKey
           );
           archived = true;
         } else {
-          await archiveInterviewToHistory(selectedEmp, savedForm, '저장완료');
+          await archiveInterviewToHistory(selectedEmp, savedForm, '저장완료', viewPeriodKey);
           archived = true;
         }
         setHistoryTableReady(true);
@@ -640,7 +785,8 @@ export default function Dashboard({
       await saveInterviewToSupabase(
         selectedEmp,
         archived ? clearedForm : savedForm,
-        '저장완료'
+        '저장완료',
+        viewPeriodKey
       );
       setInterviewRecords((prev) => ({
         ...prev,
@@ -745,16 +891,54 @@ export default function Dashboard({
   const renderInterviewSummary = () => (
     <section className="interview-summary-bar">
       <div className="summary-header">
-        <div>
+        <div className="summary-header-main">
           <div className="summary-title-row">
             <h2 className="summary-title">면담 기록 현황</h2>
             <span className="summary-total">
               면담 대상 {interviewTargetCount}명 / 전체 {employees.length}명
             </span>
           </div>
+          <div className="summary-controls">
+            <label className="summary-period-label" htmlFor="interview-period-select">
+              면담 시기
+            </label>
+            <select
+              id="interview-period-select"
+              className="summary-period-select"
+              value={viewPeriodKey}
+              onChange={(e) => void handleViewPeriodChange(e.target.value)}
+              disabled={dataLoading || periodActionLoading || interviewPeriods.length === 0}
+            >
+              {interviewPeriods.map((period) => (
+                <option key={period.periodKey} value={period.periodKey}>
+                  {period.label}
+                  {period.isActive ? ' (진행 중)' : ''}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="form-btn period-start"
+              onClick={handleStartNewPeriod}
+              disabled={
+                dataLoading ||
+                periodActionLoading ||
+                saveStatus === 'saving' ||
+                !periodTableReady
+              }
+            >
+              다음 면담 시기 시작
+            </button>
+          </div>
           <div className="summary-badges">
+            {!periodTableReady && (
+              <span className="db-badge error">⚠️ 019_interview_period.sql 실행 필요</span>
+            )}
             {!interviewTableReady && (
               <span className="db-badge error">⚠️ team_interview 테이블 필요</span>
+            )}
+            {isArchivedView && selectedViewPeriod && (
+              <span className="db-badge archived">📁 {selectedViewPeriod.label} 열람 중</span>
             )}
             {saveStatus === 'saving' && (
               <span className="db-badge loading">💾 저장 중...</span>
@@ -802,6 +986,7 @@ export default function Dashboard({
 
     const currentStatus = getStatusForEmployee(selectedEmp);
     const transferTenure = formatTransferTenure(selectedEmp.transferDate);
+    const formReadOnly = isArchivedView;
 
     return (
       <section className="form-card">
@@ -818,6 +1003,13 @@ export default function Dashboard({
               {transferTenure ? ` · 근속 ${transferTenure}` : ''}
             </p>
           </div>
+
+          {formReadOnly && selectedViewPeriod && (
+            <p className="interview-history-note archived-view">
+              {selectedViewPeriod.label} 기록을 열람 중입니다. 수정은 현재 진행 중인 면담 시기에서만
+              가능합니다.
+            </p>
+          )}
 
           {!historyTableReady && (
             <p className="interview-history-note warning">
@@ -837,6 +1029,7 @@ export default function Dashboard({
               className="form-input"
               value={form.date}
               onChange={(e) => updateFormField('date', e.target.value)}
+              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
             />
           </div>
           <div className="form-field">
@@ -844,9 +1037,11 @@ export default function Dashboard({
             <select
               id="interview-purpose"
               className="form-select"
-              value={normalizeInterviewPurpose(form.purpose)}
+              value={form.purpose ? normalizeInterviewPurpose(form.purpose) : ''}
               onChange={(e) => updateFormField('purpose', e.target.value)}
+              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
             >
+              {!form.purpose && <option value="">선택</option>}
               {INTERVIEW_PURPOSE_OPTIONS.map((purpose) => (
                 <option key={purpose} value={purpose}>
                   {purpose}
@@ -868,6 +1063,7 @@ export default function Dashboard({
               onChange={(e) => updateLimitedTextField('content', e.target.value)}
               onKeyDown={handleLimitedTextKeyDown}
               placeholder="피드백 내용을 입력하세요"
+              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
             />
           </div>
           <div className="form-field full">
@@ -884,6 +1080,7 @@ export default function Dashboard({
               onChange={(e) => updateLimitedTextField('feedback', e.target.value)}
               onKeyDown={handleLimitedTextKeyDown}
               placeholder="피평가자에 대한 개선 요청 사항"
+              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
             />
           </div>
           <div className="form-field full">
@@ -903,6 +1100,7 @@ export default function Dashboard({
                 }));
               }}
               placeholder="피평가자의 건의, 제안, 민원"
+              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
             />
           </div>
         </div>
@@ -912,7 +1110,7 @@ export default function Dashboard({
             type="button"
             className="form-btn reset"
             onClick={() => void handleResetForm()}
-            disabled={saveStatus === 'saving'}
+            disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
           >
             초기화
           </button>
@@ -920,7 +1118,7 @@ export default function Dashboard({
             type="button"
             className="form-btn complete"
             onClick={() => void handleInterviewComplete()}
-            disabled={saveStatus === 'saving'}
+            disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
           >
             면담 완료
           </button>
@@ -928,7 +1126,7 @@ export default function Dashboard({
             type="button"
             className="form-btn draft"
             onClick={() => void handleDraftSave()}
-            disabled={saveStatus === 'saving'}
+            disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
           >
             작성중
           </button>
@@ -936,7 +1134,7 @@ export default function Dashboard({
             type="button"
             className="form-btn save"
             onClick={() => void handleFinalSave()}
-            disabled={saveStatus === 'saving'}
+            disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
           >
             저장하기
           </button>
@@ -944,7 +1142,7 @@ export default function Dashboard({
             type="button"
             className="form-btn exclude"
             onClick={() => void handleExcludeSave()}
-            disabled={saveStatus === 'saving'}
+            disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
           >
             대상외
           </button>
@@ -953,7 +1151,7 @@ export default function Dashboard({
             className="form-btn history"
             onClick={() => setHistoryExpanded((prev) => !prev)}
             aria-expanded={historyExpanded}
-            disabled={saveStatus === 'saving'}
+            disabled={saveStatus === 'saving' || periodActionLoading}
           >
             {historyExpanded ? '지난 면담 접기' : '지난 면담 불러오기'}
           </button>
@@ -1189,6 +1387,75 @@ export default function Dashboard({
       {specialCharNotice && (
         <div className="interview-special-char-toast" role="status" aria-live="polite">
           {specialCharNotice}
+        </div>
+      )}
+
+      {newPeriodModalOpen && (
+        <div
+          className="interview-save-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="interview-new-period-modal-title"
+          onClick={() => !periodActionLoading && setNewPeriodModalOpen(false)}
+        >
+          <div className="interview-save-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 id="interview-new-period-modal-title" className="interview-save-modal-title">
+              다음 면담 시기 시작
+            </h2>
+            <p className="interview-save-modal-message">
+              다음 면담 시기를 시작하시겠습니까? 현재 진행 상황이 새로 생성되며 기존 기록은 차수별
+              이력으로 저장됩니다.
+            </p>
+            <div className="interview-new-period-fields">
+              <label className="interview-new-period-field" htmlFor="new-period-year">
+                연도
+                <input
+                  id="new-period-year"
+                  type="number"
+                  className="form-input"
+                  min={2000}
+                  max={2100}
+                  value={newPeriodYear}
+                  onChange={(e) => setNewPeriodYear(Number(e.target.value))}
+                  disabled={periodActionLoading}
+                />
+              </label>
+              <label className="interview-new-period-field" htmlFor="new-period-type">
+                면담 시기
+                <select
+                  id="new-period-type"
+                  className="form-select"
+                  value={newPeriodType}
+                  onChange={(e) => setNewPeriodType(e.target.value as InterviewPeriodType)}
+                  disabled={periodActionLoading}
+                >
+                  {INTERVIEW_PERIOD_TYPES.map((periodType) => (
+                    <option key={periodType} value={periodType}>
+                      {periodType}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="interview-save-modal-actions">
+              <button
+                type="button"
+                className="form-btn save"
+                onClick={() => void confirmStartNewPeriod()}
+                disabled={periodActionLoading}
+              >
+                {periodActionLoading ? '시작 중...' : '확인'}
+              </button>
+              <button
+                type="button"
+                className="form-btn reset"
+                onClick={() => setNewPeriodModalOpen(false)}
+                disabled={periodActionLoading}
+              >
+                취소
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
