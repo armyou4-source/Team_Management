@@ -21,8 +21,10 @@ import {
   createEmptyPeriodInterviewForm,
   deleteInterviewHistoryEntry,
   ensureActiveInterviewPeriod,
-  fetchInterviewHistoryForEmployee,
+  fetchLoadableInterviewEntriesForEmployee,
   fetchInterviewPeriods,
+  DEFAULT_INTERVIEW_PERIOD_KEY,
+  formatInterviewPeriodLabel,
   fetchInterviewsForPeriod,
   getEmployeeDbKey,
   hasComplaintsContent,
@@ -166,6 +168,7 @@ export default function Dashboard({
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyTableReady, setHistoryTableReady] = useState(true);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  const [historyLoadPeriodKey, setHistoryLoadPeriodKey] = useState('');
   const [historyDeletingId, setHistoryDeletingId] = useState<string | null>(null);
   const [loadedHistoryEntryId, setLoadedHistoryEntryId] = useState<string | null>(null);
   const [historySaveModalOpen, setHistorySaveModalOpen] = useState(false);
@@ -275,6 +278,7 @@ export default function Dashboard({
         setInterviewPeriods(periods);
         setActivePeriodKey(activePeriod.periodKey);
         setViewPeriodKey(activePeriod.periodKey);
+        setHistoryLoadPeriodKey(activePeriod.periodKey);
         await loadRecordsForPeriod(activePeriod.periodKey);
       } catch (err: unknown) {
         if (isMissingPeriodTableError(err as { code?: string; message?: string })) {
@@ -283,7 +287,7 @@ export default function Dashboard({
           setActivePeriodKey('');
           setViewPeriodKey('');
           try {
-            await loadRecordsForPeriod('legacy');
+            await loadRecordsForPeriod(DEFAULT_INTERVIEW_PERIOD_KEY);
           } catch (innerErr: unknown) {
             if (isMissingTableError(innerErr as { code?: string; message?: string })) {
               setInterviewRecords({});
@@ -352,28 +356,56 @@ export default function Dashboard({
 
   const interviewTargetCount = employees.length - summaryStats.대상외;
 
-  const loadInterviewHistory = useCallback(async (emp: Employee, periodKey = viewPeriodKey) => {
-    setHistoryLoading(true);
-    setHistoryError(null);
+  const loadInterviewHistory = useCallback(
+    async (emp: Employee, periodKey = historyLoadPeriodKey || viewPeriodKey) => {
+      setHistoryLoading(true);
+      setHistoryError(null);
 
-    try {
-      const entries = await fetchInterviewHistoryForEmployee(emp, periodKey || undefined);
-      setInterviewHistory(entries);
-      setHistoryTableReady(true);
-    } catch (err: unknown) {
-      if (isMissingHistoryTableError(err as { code?: string; message?: string })) {
-        setInterviewHistory([]);
-        setHistoryTableReady(false);
-      } else {
-        const message =
-          err instanceof Error ? err.message : '지난 면담 기록을 불러오지 못했습니다.';
-        setHistoryError(message);
-        setInterviewHistory([]);
+      try {
+        const resolvedPeriodKey = periodKey || DEFAULT_INTERVIEW_PERIOD_KEY;
+        const periodMeta = interviewPeriods.find((period) => period.periodKey === resolvedPeriodKey);
+        const periodLabel =
+          periodMeta?.label ?? formatInterviewPeriodLabel(resolvedPeriodKey);
+        const entries = await fetchLoadableInterviewEntriesForEmployee(
+          emp,
+          resolvedPeriodKey,
+          periodLabel
+        );
+        setInterviewHistory(entries);
+        setHistoryTableReady(true);
+      } catch (err: unknown) {
+        if (isMissingHistoryTableError(err as { code?: string; message?: string })) {
+          setInterviewHistory([]);
+          setHistoryTableReady(false);
+        } else {
+          const message =
+            err instanceof Error ? err.message : '지난 면담 기록을 불러오지 못했습니다.';
+          setHistoryError(message);
+          setInterviewHistory([]);
+        }
+      } finally {
+        setHistoryLoading(false);
       }
-    } finally {
-      setHistoryLoading(false);
+    },
+    [historyLoadPeriodKey, viewPeriodKey, interviewPeriods]
+  );
+
+  const handleHistoryPeriodChange = async (periodKey: string) => {
+    setHistoryLoadPeriodKey(periodKey);
+    if (selectedEmp) {
+      await loadInterviewHistory(selectedEmp, periodKey);
     }
-  }, [viewPeriodKey]);
+  };
+
+  const toggleHistoryPanel = () => {
+    setHistoryExpanded((prev) => {
+      const next = !prev;
+      if (next && selectedEmp) {
+        void loadInterviewHistory(selectedEmp, historyLoadPeriodKey || viewPeriodKey);
+      }
+      return next;
+    });
+  };
 
   const handleViewPeriodChange = async (periodKey: string) => {
     setViewPeriodKey(periodKey);
@@ -461,7 +493,8 @@ export default function Dashboard({
       );
     }
     setHistoryExpanded(false);
-    void loadInterviewHistory(emp);
+    setHistoryLoadPeriodKey(viewPeriodKey);
+    void loadInterviewHistory(emp, viewPeriodKey);
   };
 
   useEffect(() => {
@@ -824,7 +857,7 @@ export default function Dashboard({
   };
 
   const handleDeleteHistoryEntry = async (entry: InterviewHistoryEntry) => {
-    if (!selectedEmp) {
+    if (!selectedEmp || entry.isPeriodSnapshot) {
       return;
     }
 
@@ -866,7 +899,7 @@ export default function Dashboard({
         purpose: normalizeInterviewPurpose(entry.form.purpose),
       })
     );
-    setLoadedHistoryEntryId(entry.id);
+    setLoadedHistoryEntryId(entry.isPeriodSnapshot ? null : entry.id);
     setHistoryExpanded(false);
   };
 
@@ -1149,7 +1182,7 @@ export default function Dashboard({
           <button
             type="button"
             className="form-btn history"
-            onClick={() => setHistoryExpanded((prev) => !prev)}
+            onClick={toggleHistoryPanel}
             aria-expanded={historyExpanded}
             disabled={saveStatus === 'saving' || periodActionLoading}
           >
@@ -1159,8 +1192,26 @@ export default function Dashboard({
 
         {historyExpanded && (
           <section className="interview-history-panel interview-history-panel-actions">
+            <div className="interview-history-toolbar">
+              <label className="interview-history-period-label" htmlFor="history-period-select">
+                면담 시기
+              </label>
+              <select
+                id="history-period-select"
+                className="interview-history-period-select"
+                value={historyLoadPeriodKey || viewPeriodKey}
+                onChange={(e) => void handleHistoryPeriodChange(e.target.value)}
+                disabled={historyLoading || interviewPeriods.length === 0}
+              >
+                {interviewPeriods.map((period) => (
+                  <option key={period.periodKey} value={period.periodKey}>
+                    {period.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <p className="interview-history-desc">
-              저장된 지난 면담 기록을 선택하면 위 작성란에 불러옵니다.
+              선택한 시기의 저장된 면담 기록을 불러옵니다.
             </p>
             {historyLoading && (
               <p className="interview-history-empty">지난 면담 기록을 불러오는 중...</p>
@@ -1189,18 +1240,23 @@ export default function Dashboard({
                       </div>
                       <p className="interview-history-preview">{getHistoryPreview(entry.form)}</p>
                       <span className="interview-history-meta">
+                        {entry.periodLabel ?? formatInterviewPeriodLabel(entry.periodKey ?? '')}
+                        {' · '}
                         저장 {formatHistoryDate(entry.savedAt)}
+                        {entry.isPeriodSnapshot ? ' · 시기 기록' : ''}
                       </span>
                     </button>
-                    <button
-                      type="button"
-                      className="interview-history-delete-btn"
-                      onClick={() => void handleDeleteHistoryEntry(entry)}
-                      disabled={historyDeletingId === entry.id}
-                      aria-label={`${entry.form.purpose} 면담 기록 삭제`}
-                    >
-                      {historyDeletingId === entry.id ? '삭제 중' : '삭제'}
-                    </button>
+                    {!entry.isPeriodSnapshot && (
+                      <button
+                        type="button"
+                        className="interview-history-delete-btn"
+                        onClick={() => void handleDeleteHistoryEntry(entry)}
+                        disabled={historyDeletingId === entry.id}
+                        aria-label={`${entry.form.purpose} 면담 기록 삭제`}
+                      >
+                        {historyDeletingId === entry.id ? '삭제 중' : '삭제'}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
