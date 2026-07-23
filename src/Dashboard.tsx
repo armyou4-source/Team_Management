@@ -47,7 +47,7 @@ import {
   saveInterviewToSupabase,
   shouldShowComplaintBadge,
   startNewInterviewPeriod,
-  syncComplaintStatusToHistory,
+  syncComplaintsToHistory,
   updateInterviewHistoryEntry,
 } from './interviewService';
 import LeaderPageNav, { type LeaderPage } from './LeaderPageNav';
@@ -637,7 +637,7 @@ export default function Dashboard({
     }
 
     try {
-      await syncComplaintStatusToHistory(emp, complaints, complaintStatus, viewPeriodKey);
+      await syncComplaintsToHistory(emp, complaints, complaintStatus, viewPeriodKey);
       setHistoryTableReady(true);
       if (historyExpanded) {
         await loadInterviewHistory(emp);
@@ -717,7 +717,7 @@ export default function Dashboard({
   };
 
   const handleComplaintsBlur = () => {
-    if (!selectedEmp || !isArchivedView || !viewPeriodKey) {
+    if (!selectedEmp || !viewPeriodKey) {
       return;
     }
 
@@ -960,6 +960,10 @@ export default function Dashboard({
   };
 
   const handleLoadHistoryEntry = (entry: InterviewHistoryEntry) => {
+    if (!selectedEmp) {
+      return;
+    }
+
     if (hasFormContent(form)) {
       const confirmed = window.confirm(
         '현재 작성 중인 내용이 있습니다. 선택한 지난 면담 내용으로 덮어쓸까요?'
@@ -970,6 +974,8 @@ export default function Dashboard({
     setForm(
       sanitizeInterviewLimitedFields({
         ...entry.form,
+        complaints: form.complaints,
+        complaintStatus: form.complaintStatus,
         purpose: normalizeInterviewPurpose(entry.form.purpose),
       })
     );

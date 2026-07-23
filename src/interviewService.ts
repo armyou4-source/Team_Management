@@ -519,23 +519,21 @@ export const updateInterviewHistoryEntry = async (
   }
 };
 
-export const syncComplaintStatusToHistory = async (
+export const syncComplaintsToHistory = async (
   emp: EmployeeRef,
   complaints: string,
   complaintStatus: ComplaintStatus | '',
   interviewPeriod: string
 ): Promise<number> => {
-  const trimmedComplaints = complaints.trim();
-  if (!trimmedComplaints) {
-    return 0;
-  }
-
-  const normalizedStatus = normalizeComplaintStatus(complaintStatus) || DEFAULT_COMPLAINT_STATUS;
   const employeeKey = getEmployeeDbKey(emp);
+  const trimmedComplaints = complaints.trim();
+  const normalizedStatus = trimmedComplaints
+    ? normalizeComplaintStatus(complaintStatus) || DEFAULT_COMPLAINT_STATUS
+    : null;
 
   const { data, error: fetchError } = await supabase
     .from('team_interview_history')
-    .select('*')
+    .select('id')
     .eq('사번', employeeKey)
     .eq('interview_period', interviewPeriod);
 
@@ -543,26 +541,33 @@ export const syncComplaintStatusToHistory = async (
     throw fetchError;
   }
 
-  const matchingIds =
-    (data as TeamInterviewHistoryRow[] | null)
-      ?.filter((row) => (row.제안민원 ?? '').trim() === trimmedComplaints)
-      .map((row) => row.id) ?? [];
-
-  if (matchingIds.length === 0) {
+  const historyIds = (data as { id: string }[] | null)?.map((row) => row.id) ?? [];
+  if (historyIds.length === 0) {
     return 0;
   }
 
   const { error } = await supabase
     .from('team_interview_history')
-    .update({ 건의상태: normalizedStatus })
-    .in('id', matchingIds);
+    .update({
+      제안민원: trimmedComplaints || null,
+      건의상태: normalizedStatus,
+    })
+    .in('id', historyIds);
 
   if (error) {
     throw error;
   }
 
-  return matchingIds.length;
+  return historyIds.length;
 };
+
+/** @deprecated Use syncComplaintsToHistory */
+export const syncComplaintStatusToHistory = async (
+  emp: EmployeeRef,
+  complaints: string,
+  complaintStatus: ComplaintStatus | '',
+  interviewPeriod: string
+): Promise<number> => syncComplaintsToHistory(emp, complaints, complaintStatus, interviewPeriod);
 
 export const deleteInterviewHistoryEntry = async (id: string): Promise<void> => {
   const { error } = await supabase.from('team_interview_history').delete().eq('id', id);
