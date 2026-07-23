@@ -12,6 +12,14 @@ export type InterviewPeriodType = (typeof INTERVIEW_PERIOD_TYPES)[number];
 export const LEGACY_INTERVIEW_PERIOD_KEY = 'legacy';
 export const DEFAULT_INTERVIEW_PERIOD_KEY = '2026-중간면담';
 
+export const isLegacyInterviewPeriod = (periodKey: string): boolean =>
+  periodKey === LEGACY_INTERVIEW_PERIOD_KEY;
+
+const filterSelectableInterviewPeriods = (
+  periods: InterviewPeriodMeta[]
+): InterviewPeriodMeta[] =>
+  periods.filter((period) => !isLegacyInterviewPeriod(period.periodKey));
+
 export const COMPLAINT_STATUS_OPTIONS = ['확인', '진행중', '완료', '표시안함'] as const;
 export type ComplaintStatus = (typeof COMPLAINT_STATUS_OPTIONS)[number];
 
@@ -262,7 +270,9 @@ export const fetchInterviewPeriods = async (): Promise<InterviewPeriodMeta[]> =>
     throw error;
   }
 
-  const periods = (data as TeamInterviewPeriodRow[] | null)?.map(mapPeriodRowToMeta) ?? [];
+  const periods = filterSelectableInterviewPeriods(
+    (data as TeamInterviewPeriodRow[] | null)?.map(mapPeriodRowToMeta) ?? []
+  );
   if (periods.length === 0) {
     return [
       {
