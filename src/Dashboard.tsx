@@ -592,7 +592,7 @@ export default function Dashboard({
 
   const renderComplaintsFieldHeader = () => {
     const activeStatus = getActiveComplaintStatus(form.complaintStatus);
-    const canSetStatus = hasComplaintsContent(form) && !isArchivedView;
+    const canSetStatus = hasComplaintsContent(form);
 
     return (
       <div className="form-label-row">
@@ -627,24 +627,21 @@ export default function Dashboard({
     );
   };
 
-  const handleComplaintStatusChange = async (status: ComplaintStatus) => {
-    if (!selectedEmp || !hasComplaintsContent(form) || isArchivedView || !viewPeriodKey) {
+  const syncComplaintStatusAndHistory = async (
+    emp: Employee,
+    complaints: string,
+    complaintStatus: ComplaintStatus | ''
+  ) => {
+    if (!viewPeriodKey) {
       return;
     }
 
-    const nextForm = { ...form, complaintStatus: status };
-    setForm(nextForm);
-    await upsertInterviewRecord(selectedEmp, nextForm, getStatusForEmployee(selectedEmp));
-
     try {
-      await syncComplaintStatusToHistory(
-        selectedEmp,
-        nextForm.complaints,
-        status,
-        viewPeriodKey
-      );
+      await syncComplaintStatusToHistory(emp, complaints, complaintStatus, viewPeriodKey);
       setHistoryTableReady(true);
-      await loadInterviewHistory(selectedEmp);
+      if (historyExpanded) {
+        await loadInterviewHistory(emp);
+      }
     } catch (err: unknown) {
       if (!isMissingHistoryTableError(err as { code?: string; message?: string })) {
         console.error('Error syncing complaint status to history:', err);
@@ -655,6 +652,83 @@ export default function Dashboard({
         setHistoryTableReady(false);
       }
     }
+  };
+
+  const saveComplaintFieldsOnly = async (emp: Employee, nextForm: InterviewForm) => {
+    if (!viewPeriodKey) {
+      alert('면담 시기 정보를 불러오지 못했습니다.');
+      return;
+    }
+
+    const currentStatus = getStatusForEmployee(emp);
+    const record = getRecordForEmployee(emp);
+    const mergedForm: InterviewForm = {
+      ...(record?.form ?? form),
+      complaints: nextForm.complaints,
+      complaintStatus: nextForm.complaintStatus,
+    };
+
+    setSaveStatus('saving');
+
+    try {
+      await saveInterviewToSupabase(emp, mergedForm, currentStatus, viewPeriodKey);
+      setInterviewRecords((prev) => ({
+        ...prev,
+        [getEmployeeDbKey(emp)]: { form: mergedForm, status: currentStatus },
+      }));
+      setInterviewTableReady(true);
+      setSaveStatus('idle');
+      await syncComplaintStatusAndHistory(
+        emp,
+        mergedForm.complaints,
+        mergedForm.complaintStatus
+      );
+    } catch (err: unknown) {
+      console.error('Error saving complaint fields:', err);
+      setSaveStatus('error');
+      if (isMissingTableError(err as { code?: string; message?: string })) {
+        setInterviewTableReady(false);
+        alert(
+          'team_interview 테이블이 없습니다.\n\nSupabase Dashboard → SQL Editor에서\nsupabase/migrations/001_create_team_interview.sql 을 실행해 주세요.'
+        );
+      } else {
+        const message =
+          err instanceof Error ? err.message : '건의 사항 저장에 실패했습니다.';
+        alert(message);
+      }
+    }
+  };
+
+  const handleComplaintStatusChange = async (status: ComplaintStatus) => {
+    if (!selectedEmp || !hasComplaintsContent(form) || !viewPeriodKey) {
+      return;
+    }
+
+    const nextForm = { ...form, complaintStatus: status };
+    setForm(nextForm);
+
+    if (isArchivedView) {
+      await saveComplaintFieldsOnly(selectedEmp, nextForm);
+      return;
+    }
+
+    await upsertInterviewRecord(selectedEmp, nextForm, getStatusForEmployee(selectedEmp));
+    await syncComplaintStatusAndHistory(selectedEmp, nextForm.complaints, status);
+  };
+
+  const handleComplaintsBlur = () => {
+    if (!selectedEmp || !isArchivedView || !viewPeriodKey) {
+      return;
+    }
+
+    const record = getRecordForEmployee(selectedEmp);
+    const savedComplaints = record?.form.complaints ?? '';
+    const savedStatus = record?.form.complaintStatus ?? '';
+    if (form.complaints === savedComplaints && form.complaintStatus === savedStatus) {
+      return;
+    }
+
+    void saveComplaintFieldsOnly(selectedEmp, form);
   };
 
   const upsertInterviewRecord = async (
@@ -1039,8 +1113,8 @@ export default function Dashboard({
 
           {formReadOnly && selectedViewPeriod && (
             <p className="interview-history-note archived-view">
-              {selectedViewPeriod.label} 기록을 열람 중입니다. 수정은 현재 진행 중인 면담 시기에서만
-              가능합니다.
+              {selectedViewPeriod.label} 기록을 열람 중입니다. 건의·제안·민원 내용과 진행 상태는
+              계속 수정할 수 있습니다.
             </p>
           )}
 
@@ -1132,8 +1206,9 @@ export default function Dashboard({
                     : '',
                 }));
               }}
+              onBlur={handleComplaintsBlur}
               placeholder="피평가자의 건의, 제안, 민원"
-              disabled={formReadOnly || saveStatus === 'saving' || periodActionLoading}
+              disabled={saveStatus === 'saving' || periodActionLoading}
             />
           </div>
         </div>
